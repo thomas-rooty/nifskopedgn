@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ***** END LICENCE BLOCK *****/
 
-#include "spellbook.h"
+#include "actionmenu.h"
 
 #include "ui/checkablemessagebox.h"
 

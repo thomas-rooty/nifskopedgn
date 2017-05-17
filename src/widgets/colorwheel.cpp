@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***** END LICENCE BLOCK *****/
 
 #include "colorwheel.h"
-#include "spellbook.h"
+#include "actionmenu.h"
 
 #include "floatslider.h"
 #include "niftypes.h"

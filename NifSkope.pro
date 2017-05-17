@@ -132,6 +132,7 @@ include(NifSkope_targets.pri)
 ###############################
 
 HEADERS += \
+        src/actionmenu.h \
         src/basemodel.h \
         src/kfmmodel.h \
         src/message.h \
@@ -143,7 +144,6 @@ HEADERS += \
         src/niftypes.h \
         src/nifvalue.h \
         src/settings.h \
-        src/spellbook.h \
         src/widgets/colorwheel.h \
         src/widgets/fileselect.h \
         src/widgets/floatedit.h \
@@ -161,6 +161,7 @@ HEADERS += \
         src/version.h
 
 SOURCES += \
+        src/actionmenu.cpp \
         src/basemodel.cpp \
         src/kfmmodel.cpp \
         src/kfmxml.cpp \
@@ -175,7 +176,6 @@ SOURCES += \
         src/nifvalue.cpp \
         src/nifxml.cpp \
         src/settings.cpp \
-        src/spellbook.cpp \
         src/widgets/colorwheel.cpp \
         src/widgets/fileselect.cpp \
         src/widgets/floatedit.cpp \
