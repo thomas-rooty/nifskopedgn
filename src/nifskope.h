@@ -37,7 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <QMainWindow>     // Inherited
 #include <QObject>         // Inherited
-#include <QFileInfo>
 #include <QModelIndex>
 #include <QUndoCommand>
 
@@ -73,9 +72,7 @@ class QStandardItemModel;
 class QAction;
 class QActionGroup;
 class QComboBox;
-class QGraphicsScene;
 class QLocale;
-class QModelIndex;
 class QProgressBar;
 class QStringList;
 class QTimer;
@@ -334,9 +331,11 @@ private:
 	//GLView * ogl;
 	//QGraphicsScene * graphicsScene;
 	//GLGraphicsView * graphicsView;
-
-	QComboBox * animGroups;
-	QAction * animGroupsAction;
+	//QComboBox * animGroups;
+	//QAction * animGroupsAction;
+	//QActionGroup * selectActions;
+	//QActionGroup * showActions;
+	//QActionGroup * shadingActions;
 
 	bool selecting = false;
 	bool initialShowEvent = true;
@@ -360,10 +359,6 @@ private:
 
 	QAction * undoAction;
 	QAction * redoAction;
-
-	QActionGroup * selectActions;
-	QActionGroup * showActions;
-	QActionGroup * shadingActions;
 
 	QActionGroup * gListMode;
 	QAction * aList;

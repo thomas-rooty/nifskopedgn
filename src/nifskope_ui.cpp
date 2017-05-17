@@ -457,71 +457,66 @@ void NifSkope::initMenu()
 	}
 
 	updateRecentFileActions();
+
 	// REFACTOR: BSA
 	//updateRecentArchiveActions();
 	//updateRecentArchiveFileActions();
-
-
-	// BSA Recent Archives
-	auto tRecentArchives = new QToolButton( this );
-	tRecentArchives->setObjectName( "tRecentArchives" );
-	tRecentArchives->setText( "Recent Archives" );
-	tRecentArchives->setStyleSheet( "padding-right: 10px;" );
-	tRecentArchives->setMenu( ui->mRecentArchives );
-	tRecentArchives->setPopupMode( QToolButton::InstantPopup );
-
-	// BSA Recent Files
-	auto tRecentArchiveFiles = new QToolButton( this );
-	tRecentArchiveFiles->setObjectName( "tRecentArchiveFiles" );
-	tRecentArchiveFiles->setText( "Recent Files" );
-	tRecentArchiveFiles->setStyleSheet( "padding-right: 10px;" );
-	tRecentArchiveFiles->setMenu( mRecentArchiveFiles );
-	tRecentArchiveFiles->setPopupMode( QToolButton::InstantPopup );
-
-	ui->bsaTitleBar->layout()->addWidget( tRecentArchives );
-	ui->bsaTitleBar->layout()->addWidget( tRecentArchiveFiles );
+	//
+	//// BSA Recent Archives
+	//auto tRecentArchives = new QToolButton( this );
+	//tRecentArchives->setObjectName( "tRecentArchives" );
+	//tRecentArchives->setText( "Recent Archives" );
+	//tRecentArchives->setStyleSheet( "padding-right: 10px;" );
+	//tRecentArchives->setMenu( ui->mRecentArchives );
+	//tRecentArchives->setPopupMode( QToolButton::InstantPopup );
+	//
+	//// BSA Recent Files
+	//auto tRecentArchiveFiles = new QToolButton( this );
+	//tRecentArchiveFiles->setObjectName( "tRecentArchiveFiles" );
+	//tRecentArchiveFiles->setText( "Recent Files" );
+	//tRecentArchiveFiles->setStyleSheet( "padding-right: 10px;" );
+	//tRecentArchiveFiles->setMenu( mRecentArchiveFiles );
+	//tRecentArchiveFiles->setPopupMode( QToolButton::InstantPopup );
+	//
+	//ui->bsaTitleBar->layout()->addWidget( tRecentArchives );
+	//ui->bsaTitleBar->layout()->addWidget( tRecentArchiveFiles );
 }
 
 
 void NifSkope::initToolBars()
 {
-	// Disable without NIF loaded
-	ui->tRender->setEnabled( false );
-	ui->tRender->setContextMenuPolicy( Qt::ActionsContextMenu );
-
 	// Status Bar
 	ui->statusbar->setContentsMargins( 0, 0, 0, 0 );
 	ui->statusbar->addPermanentWidget( progress );
-	
-	// TODO: Split off into own widget
-	ui->statusbar->addPermanentWidget( filePathWidget( this ) );
 
-
-	// Render
-
-	QActionGroup * grpView = new QActionGroup( this );
-	grpView->addAction( ui->aViewTop );
-	grpView->addAction( ui->aViewFront );
-	grpView->addAction( ui->aViewLeft );
-	grpView->addAction( ui->aViewWalk );
-	grpView->setExclusive( true );
-
-
+	// REFACTOR: GL
+	//// Render
+	//
+	//// Disable without NIF loaded
+	//ui->tRender->setEnabled( false );
+	//ui->tRender->setContextMenuPolicy( Qt::ActionsContextMenu );
+	//
+	//QActionGroup * grpView = new QActionGroup( this );
+	//grpView->addAction( ui->aViewTop );
+	//grpView->addAction( ui->aViewFront );
+	//grpView->addAction( ui->aViewLeft );
+	//grpView->addAction( ui->aViewWalk );
+	//grpView->setExclusive( true );
+	//
 	// Animate
 	//connect( ui->aAnimate, &QAction::toggled, ui->tAnim, &QToolBar::setVisible );
 	//connect( ui->tAnim, &QToolBar::visibilityChanged, ui->aAnimate, &QAction::setChecked );
-
-	/*enum AnimationStates
-	{
-		AnimDisabled = 0x0,
-		AnimEnabled = 0x1,
-		AnimPlay = 0x2,
-		AnimLoop = 0x4,
-		AnimSwitch = 0x8
-	};*/
-
-	// REFACTOR: GL
-	//ui->aAnimate->setData( GLView::AnimEnabled );
+	//
+	///*enum AnimationStates
+	//{
+	//	AnimDisabled = 0x0,
+	//	AnimEnabled = 0x1,
+	//	AnimPlay = 0x2,
+	//	AnimLoop = 0x4,
+	//	AnimSwitch = 0x8
+	//};*/
+	//
+	////ui->aAnimate->setData( GLView::AnimEnabled );
 	//ui->aAnimPlay->setData( GLView::AnimPlay );
 	//ui->aAnimLoop->setData( GLView::AnimLoop );
 	//ui->aAnimSwitch->setData( GLView::AnimSwitch );
