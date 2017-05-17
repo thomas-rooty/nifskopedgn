@@ -32,7 +32,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "settings.h"
 
-#include "glview.h"
+// REFACTOR: GL
+//#include "glview.h"
+
 #include "kfmmodel.h"
 #include "nifmodel.h"
 #include "nifproxy.h"

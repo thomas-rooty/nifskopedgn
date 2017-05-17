@@ -10,7 +10,8 @@
 
 #define NifSkopeDisplayRole (Qt::UserRole + 42)
 
-class FSManager;
+// REFACTOR: BSA
+//class FSManager;
 
 class QListWidgetItem;
 class QStringListModel;
@@ -110,7 +111,8 @@ public slots:
 private:
 	std::unique_ptr<Ui::SettingsResources> ui;
 
-	FSManager * archiveMgr;
+	// REFACTOR: BSA
+	//FSManager * archiveMgr;
 
 	QStringListModel * folders;
 	QStringListModel * archives;

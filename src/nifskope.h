@@ -58,10 +58,9 @@ namespace nstypes
 	QString operator"" _uip( const char * str, size_t sz );
 }
 
-class FileSelector;
-class GLView;
-class GLGraphicsView;
-class InspectView;
+
+// REFACTOR: GL
+//class InspectView;
 class KfmModel;
 class NifModel;
 class NifProxyModel;
@@ -69,10 +68,6 @@ class NifTreeView;
 class ReferenceBrowser;
 class SettingsDialog;
 class SpellBook;
-class FSArchiveHandler;
-class BSA;
-class BSAModel;
-class BSAProxyModel;
 class QStandardItemModel;
 
 class QAction;
@@ -154,9 +149,10 @@ public slots:
 	void openFile( QString & );
 	void openFiles( QStringList & );
 
-	void openArchive( const QString & );
-	void openArchiveFile( const QModelIndex & );
-	void openArchiveFileString( BSA *, const QString & );
+	// REFACTOR: BSA
+	//void openArchive( const QString & );
+	//void openArchiveFile( const QModelIndex & );
+	//void openArchiveFileString( BSA *, const QString & );
 
 	void enableUi();
 
@@ -187,17 +183,18 @@ public slots:
 
 	void on_tRender_actionTriggered( QAction * );
 
-	void on_aViewTop_triggered( bool );
-	void on_aViewFront_triggered( bool );
-	void on_aViewLeft_triggered( bool );
-	
-	void on_aViewCenter_triggered();
-	void on_aViewFlip_triggered( bool );
-	void on_aViewPerspective_toggled( bool );
-	void on_aViewWalk_triggered( bool );
-	
-	void on_aViewUser_toggled( bool );
-	void on_aViewUserSave_triggered( bool );
+	// REFACTOR: GL
+	//void on_aViewTop_triggered( bool );
+	//void on_aViewFront_triggered( bool );
+	//void on_aViewLeft_triggered( bool );
+	//
+	//void on_aViewCenter_triggered();
+	//void on_aViewFlip_triggered( bool );
+	//void on_aViewPerspective_toggled( bool );
+	//void on_aViewWalk_triggered( bool );
+	//
+	//void on_aViewUser_toggled( bool );
+	//void on_aViewUserSave_triggered( bool );
 
 	void on_aSettings_triggered();
 
@@ -206,7 +203,8 @@ protected slots:
 	void openDlg();
 	void saveAsDlg();
 
-	void archiveDlg();
+	// REFACTOR: BSA
+	//void archiveDlg();
 
 	void load();
 	void save();
@@ -230,13 +228,11 @@ protected slots:
 	//! Override the view font
 	void overrideViewFont();
 
-	/*! Sets Import/Export menus
-	 *
-	 * @see importex/importex.cpp
-	 */
-	void fillImportExportMenus();
-	//! Perform Import or Export
-	void sltImportExport( QAction * action );
+	// REFACTOR: Import/Export
+	////! Sets Import/Export menus
+	//void fillImportExportMenus();
+	////! Perform Import or Export
+	//void sltImportExport( QAction * action );
 
 	//! Open a URL using the system handler
 	void openURL();
@@ -261,7 +257,6 @@ private:
 
 	void loadFile( const QString & );
 	void saveFile( const QString & );
-	void checkFile( QFileInfo fInfo, QByteArray filehash );
 
 	void openRecentFile();
 	void setCurrentFile( const QString & );
@@ -269,13 +264,14 @@ private:
 	void updateRecentFileActions();
 	void updateAllRecentFileActions();
 
-	void openRecentArchive();
-	void openRecentArchiveFile();
-	void setCurrentArchive( BSA * );
-	void setCurrentArchiveFile( const QString & );
-	void clearCurrentArchive();
-	void updateRecentArchiveActions();
-	void updateRecentArchiveFileActions();
+	// REFACTOR: BSA
+	//void openRecentArchive();
+	//void openRecentArchiveFile();
+	//void setCurrentArchive( BSA * );
+	//void setCurrentArchiveFile( const QString & );
+	//void clearCurrentArchive();
+	//void updateRecentArchiveActions();
+	//void updateRecentArchiveFileActions();
 
 	//! Disconnect and reconnect the models to the views
 	void swapModels();
@@ -285,14 +281,16 @@ private:
 
 	void setViewFont( const QFont & );
 
+	// REFACTOR
 	//! Migrate settings from older versions of NifSkope.
-	void migrateSettings() const;
+	//void migrateSettings() const;
 
 	//! "About NifSkope" dialog.
 	QWidget * aboutDialog;
 
 	QString currentFile;
-	BSA * currentArchive = nullptr;
+	// REFACTOR: BSA
+	//BSA * currentArchive = nullptr;
 
 	QByteArray filehash;
 
@@ -322,21 +320,23 @@ private:
 	//! Spellbook instance
 	std::shared_ptr<SpellBook> book;
 
-	std::shared_ptr<FSArchiveHandler> archiveHandler;
+	// REFACTOR: BSA
+	//std::shared_ptr<FSArchiveHandler> archiveHandler;
 
 	static SettingsDialog * options;
 
 	//! Help browser
 	ReferenceBrowser * refrbrwsr;
 
+	// REFACTOR: GL
 	//! Transform inspect view
-	InspectView * inspect;
+	//InspectView * inspect;
 
+	// REFACTOR: GL
 	//! The main window
-	GLView * ogl;
-
-	QGraphicsScene * graphicsScene;
-	GLGraphicsView * graphicsView;
+	//GLView * ogl;
+	//QGraphicsScene * graphicsScene;
+	//GLGraphicsView * graphicsView;
 
 	QComboBox * animGroups;
 	QAction * animGroupsAction;
@@ -351,7 +351,10 @@ private:
 	QDockWidget * dHeader;
 	QDockWidget * dKfm;
 	QDockWidget * dRefr;
-	QDockWidget * dInsp;
+
+	// REFACTOR: GL
+	//QDockWidget * dInsp;
+
 	QDockWidget * dBrowser;
 
 	QToolBar * tool;
@@ -399,9 +402,10 @@ private:
 	//QAction * idxForwardAction;
 	//QAction * idxBackAction;
 
-	BSAModel * bsaModel;
-	BSAProxyModel * bsaProxyModel;
-	QStandardItemModel * emptyModel;
+	// REFACTOR: BSA
+	//BSAModel * bsaModel;
+	//BSAProxyModel * bsaProxyModel;
+	//QStandardItemModel * emptyModel;
 
 	QMenu * mRecentArchiveFiles;
 };

@@ -883,6 +883,9 @@ background: qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0
    </widget>
   </widget>
   <widget class="QDockWidget" name="BrowserDock">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="allowedAreas">
     <set>Qt::BottomDockWidgetArea|Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
    </property>

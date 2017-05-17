@@ -38,8 +38,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ui/about_dialog.h"
 #include "ui/settingsdialog.h"
 
-#include "glview.h"
-#include "gl/glscene.h"
+// REFACTOR: GL
+//#include "glview.h"
+//#include "gl/glscene.h"
+
 #include "kfmmodel.h"
 #include "nifmodel.h"
 #include "nifproxy.h"
@@ -49,8 +51,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "widgets/floatedit.h"
 #include "widgets/nifview.h"
 #include "widgets/refrbrowser.h"
-#include "widgets/inspect.h"
 #include "widgets/xmlcheck.h"
+
+// REFACTOR: GL
+//#include "widgets/inspect.h"
+
 
 #include <QAction>
 #include <QApplication>
@@ -146,29 +151,61 @@ void NifSkope::initActions()
 	redoAction->setShortcut( QKeySequence::Redo );
 	redoAction->setIcon( QIcon( ":btn/redo" ) );
 
-	// TODO: Back/Forward button in Block List
-	//idxForwardAction = indexStack->createRedoAction( this );
-	//idxBackAction = indexStack->createUndoAction( this );
-
 	ui->tFile->addAction( undoAction );
 	ui->tFile->addAction( redoAction );
 
-	connect( undoAction, &QAction::triggered, [this]( bool ) {
-		ogl->update();
-	} );
+	// REFACTOR: GL
+	//connect( undoAction, &QAction::triggered, [this]( bool ) {
+	//	ogl->update();
+	//} );
+	//connect( redoAction, &QAction::triggered, [this]( bool ) {
+	//	ogl->update();
+	//} );
 
-	connect( redoAction, &QAction::triggered, [this]( bool ) {
-		ogl->update();
-	} );
+	// REFACTOR: BSA
+	//connect( ui->aBrowseArchive, &QAction::triggered, this, &NifSkope::archiveDlg );
+
 
 	ui->aSave->setShortcut( QKeySequence::Save );
 	ui->aSaveAs->setShortcut( { "Ctrl+Alt+S" } );
 	ui->aWindow->setShortcut( QKeySequence::New );
 
-	connect( ui->aBrowseArchive, &QAction::triggered, this, &NifSkope::archiveDlg );
 	connect( ui->aOpen, &QAction::triggered, this, &NifSkope::openDlg );
 	connect( ui->aSave, &QAction::triggered, this, &NifSkope::save );  
 	connect( ui->aSaveAs, &QAction::triggered, this, &NifSkope::saveAsDlg );
+
+	// Setup blank QActions for Recent Files menus
+	for ( int i = 0; i < NumRecentFiles; ++i ) {
+		recentFileActs[i] = new QAction( this );
+		recentArchiveActs[i] = new QAction( this );
+		recentArchiveFileActs[i] = new QAction( this );
+
+		recentFileActs[i]->setVisible( false );
+		recentArchiveActs[i]->setVisible( false );
+		recentArchiveFileActs[i]->setVisible( false );
+
+		connect( recentFileActs[i], &QAction::triggered, this, &NifSkope::openRecentFile );
+		// REFACTOR: BSA
+		//connect( recentArchiveActs[i], &QAction::triggered, this, &NifSkope::openRecentArchive );
+		//connect( recentArchiveFileActs[i], &QAction::triggered, this, &NifSkope::openRecentArchiveFile );
+	}
+
+	aList->setChecked( list->model() == nif );
+	aHierarchy->setChecked( list->model() == proxy );
+
+	// Allow only List or Tree view to be selected at once
+	gListMode = new QActionGroup( this );
+	gListMode->addAction( aList );
+	gListMode->addAction( aHierarchy );
+	gListMode->setExclusive( true );
+	connect( gListMode, &QActionGroup::triggered, this, &NifSkope::setListMode );
+
+	connect( aCondition, &QAction::toggled, tree, &NifTreeView::setRowHiding );
+	connect( aCondition, &QAction::toggled, kfmtree, &NifTreeView::setRowHiding );
+
+	connect( ui->aAboutNifSkope, &QAction::triggered, aboutDialog, &AboutDialog::show );
+	connect( ui->aAboutQt, &QAction::triggered, qApp, &QApplication::aboutQt );
+
 
 	// TODO: Assure Actions and Scene state are synced
 	// Set Data for Actions to pass onto Scene when clicking
@@ -192,156 +229,128 @@ void NifSkope::initActions()
 		ShowHidden = 0x10000
 	*/
 
-	ui->aShowAxes->setData( Scene::ShowAxes );
-	ui->aShowGrid->setData( Scene::ShowGrid );
-	ui->aShowNodes->setData( Scene::ShowNodes );
-	ui->aShowCollision->setData( Scene::ShowCollision );
-	ui->aShowConstraints->setData( Scene::ShowConstraints );
-	ui->aShowMarkers->setData( Scene::ShowMarkers );
-	ui->aShowHidden->setData( Scene::ShowHidden );
-	ui->aDoSkinning->setData( Scene::DoSkinning );
-
-	ui->aTextures->setData( Scene::DoTexturing );
-	ui->aVertexColors->setData( Scene::DoVertexColors );
-	ui->aSpecular->setData( Scene::DoSpecular );
-	ui->aGlow->setData( Scene::DoGlow );
-	ui->aCubeMapping->setData( Scene::DoCubeMapping );
-	ui->aLighting->setData( Scene::DoLighting );
-	ui->aDisableShading->setData( Scene::DisableShaders );
-
-	ui->aSelectObject->setData( Scene::SelObject );
-	ui->aSelectVertex->setData( Scene::SelVertex );
-
-	auto agroup = [this]( QVector<QAction *> actions, bool exclusive ) {
-		QActionGroup * ag = new QActionGroup( this );
-		for ( auto a : actions ) {
-			ag->addAction( a );
-		}
-
-		ag->setExclusive( exclusive );
-
-		return ag;
-	};
-
-	selectActions = agroup( { ui->aSelectObject, ui->aSelectVertex }, true );
-	connect( selectActions, &QActionGroup::triggered, ogl->getScene(), &Scene::updateSelectMode );
-
-	showActions = agroup( { ui->aShowAxes, ui->aShowGrid, ui->aShowNodes, ui->aShowCollision,
-						  ui->aShowConstraints, ui->aShowMarkers, ui->aShowHidden, ui->aDoSkinning
-	}, false );
-	connect( showActions, &QActionGroup::triggered, ogl->getScene(), &Scene::updateSceneOptionsGroup );
-
-	shadingActions = agroup( { ui->aTextures, ui->aVertexColors, ui->aSpecular, ui->aGlow, ui->aCubeMapping, ui->aLighting, ui->aDisableShading }, false );
-	connect( shadingActions, &QActionGroup::triggered, ogl->getScene(), &Scene::updateSceneOptionsGroup );
-
-	auto testActions = agroup( { ui->aTest1Dbg, ui->aTest2Dbg, ui->aTest3Dbg }, true );
-	connect( testActions, &QActionGroup::triggered, ogl->getScene(), &Scene::updateSceneOptionsGroup );
-
-	// Sync actions to Scene state
-	for ( auto a : showActions->actions() ) {
-		a->setChecked( ogl->scene->options & a->data().toInt() );
-	}
-
-	// Sync actions to Scene state
-	for ( auto a : shadingActions->actions() ) {
-		a->setChecked( ogl->scene->options & a->data().toInt() );
-	}
-
-	// Setup blank QActions for Recent Files menus
-	for ( int i = 0; i < NumRecentFiles; ++i ) {
-		recentFileActs[i] = new QAction( this );
-		recentArchiveActs[i] = new QAction( this );
-		recentArchiveFileActs[i] = new QAction( this );
-
-		recentFileActs[i]->setVisible( false );
-		recentArchiveActs[i]->setVisible( false );
-		recentArchiveFileActs[i]->setVisible( false );
-
-		connect( recentFileActs[i], &QAction::triggered, this, &NifSkope::openRecentFile );
-		connect( recentArchiveActs[i], &QAction::triggered, this, &NifSkope::openRecentArchive );
-		connect( recentArchiveFileActs[i], &QAction::triggered, this, &NifSkope::openRecentArchiveFile );
-	}
-
-	aList->setChecked( list->model() == nif );
-	aHierarchy->setChecked( list->model() == proxy );
-
-	// Allow only List or Tree view to be selected at once
-	gListMode = new QActionGroup( this );
-	gListMode->addAction( aList );
-	gListMode->addAction( aHierarchy );
-	gListMode->setExclusive( true );
-	connect( gListMode, &QActionGroup::triggered, this, &NifSkope::setListMode );
-
-	connect( aCondition, &QAction::toggled, tree, &NifTreeView::setRowHiding );
-	connect( aCondition, &QAction::toggled, kfmtree, &NifTreeView::setRowHiding );
-
-	connect( ui->aAboutNifSkope, &QAction::triggered, aboutDialog, &AboutDialog::show );
-	connect( ui->aAboutQt, &QAction::triggered, qApp, &QApplication::aboutQt );
-
-	connect( ui->aPrintView, &QAction::triggered, ogl, &GLView::saveImage );
+	// REFACTOR: GL
+	//ui->aShowAxes->setData( Scene::ShowAxes );
+	//ui->aShowGrid->setData( Scene::ShowGrid );
+	//ui->aShowNodes->setData( Scene::ShowNodes );
+	//ui->aShowCollision->setData( Scene::ShowCollision );
+	//ui->aShowConstraints->setData( Scene::ShowConstraints );
+	//ui->aShowMarkers->setData( Scene::ShowMarkers );
+	//ui->aShowHidden->setData( Scene::ShowHidden );
+	//ui->aDoSkinning->setData( Scene::DoSkinning );
+	//
+	//ui->aTextures->setData( Scene::DoTexturing );
+	//ui->aVertexColors->setData( Scene::DoVertexColors );
+	//ui->aSpecular->setData( Scene::DoSpecular );
+	//ui->aGlow->setData( Scene::DoGlow );
+	//ui->aCubeMapping->setData( Scene::DoCubeMapping );
+	//ui->aLighting->setData( Scene::DoLighting );
+	//ui->aDisableShading->setData( Scene::DisableShaders );
+	//
+	//ui->aSelectObject->setData( Scene::SelObject );
+	//ui->aSelectVertex->setData( Scene::SelVertex );
+	//
+	//auto agroup = [this]( QVector<QAction *> actions, bool exclusive ) {
+	//	QActionGroup * ag = new QActionGroup( this );
+	//	for ( auto a : actions ) {
+	//		ag->addAction( a );
+	//	}
+	//
+	//	ag->setExclusive( exclusive );
+	//
+	//	return ag;
+	//};
+	//
+	//selectActions = agroup( { ui->aSelectObject, ui->aSelectVertex }, true );
+	//connect( selectActions, &QActionGroup::triggered, ogl->getScene(), &Scene::updateSelectMode );
+	//
+	//showActions = agroup( { ui->aShowAxes, ui->aShowGrid, ui->aShowNodes, ui->aShowCollision,
+	//					  ui->aShowConstraints, ui->aShowMarkers, ui->aShowHidden, ui->aDoSkinning
+	//}, false );
+	//connect( showActions, &QActionGroup::triggered, ogl->getScene(), &Scene::updateSceneOptionsGroup );
+	//
+	//shadingActions = agroup( { ui->aTextures, ui->aVertexColors, ui->aSpecular, ui->aGlow, ui->aCubeMapping, ui->aLighting, ui->aDisableShading }, false );
+	//connect( shadingActions, &QActionGroup::triggered, ogl->getScene(), &Scene::updateSceneOptionsGroup );
+	//
+	//auto testActions = agroup( { ui->aTest1Dbg, ui->aTest2Dbg, ui->aTest3Dbg }, true );
+	//connect( testActions, &QActionGroup::triggered, ogl->getScene(), &Scene::updateSceneOptionsGroup );
+	//
+	//// Sync actions to Scene state
+	//for ( auto a : showActions->actions() ) {
+	//	a->setChecked( ogl->scene->options & a->data().toInt() );
+	//}
+	//
+	//// Sync actions to Scene state
+	//for ( auto a : shadingActions->actions() ) {
+	//	a->setChecked( ogl->scene->options & a->data().toInt() );
+	//}
+	//
+	// REFACTOR: GL
+	//connect( ui->aPrintView, &QAction::triggered, ogl, &GLView::saveImage );
 
 #ifdef QT_NO_DEBUG
-	ui->aColorKeyDebug->setDisabled( true );
-	ui->aColorKeyDebug->setVisible( false );
-	ui->aBoundsDebug->setDisabled( true );
-	ui->aBoundsDebug->setVisible( false );
+	//ui->aColorKeyDebug->setDisabled( true );
+	//ui->aColorKeyDebug->setVisible( false );
+	//ui->aBoundsDebug->setDisabled( true );
+	//ui->aBoundsDebug->setVisible( false );
 #else
-	QAction * debugNone = new QAction( this );
+	//QAction * debugNone = new QAction( this );
 
-	QActionGroup * debugActions = agroup( { debugNone, ui->aColorKeyDebug, ui->aBoundsDebug }, false );
-	connect( ui->aColorKeyDebug, &QAction::triggered, [this]( bool checked ) {
-		if ( checked )
-			ogl->setDebugMode( GLView::DbgColorPicker );
-		else
-			ogl->setDebugMode( GLView::DbgNone );
-		
-		ogl->update();
-	} );
-
-	connect( ui->aBoundsDebug, &QAction::triggered, [this]( bool checked ) {
-		if ( checked )
-			ogl->setDebugMode( GLView::DbgBounds );
-		else
-			ogl->setDebugMode( GLView::DbgNone );
-
-		ogl->update();
-	} );
-
-	connect( debugActions, &QActionGroup::triggered, [=]( QAction * action ) {
-		for ( auto a : debugActions->actions() ) {
-			if ( a == action )
-				continue;
-
-			a->setChecked( false );
-		}
-	} );
+	
+	//QActionGroup * debugActions = agroup( { debugNone, ui->aColorKeyDebug, ui->aBoundsDebug }, false );
+	//connect( ui->aColorKeyDebug, &QAction::triggered, [this]( bool checked ) {
+	//	if ( checked )
+	//		ogl->setDebugMode( GLView::DbgColorPicker );
+	//	else
+	//		ogl->setDebugMode( GLView::DbgNone );
+	//	
+	//	ogl->update();
+	//} );
+	//
+	//connect( ui->aBoundsDebug, &QAction::triggered, [this]( bool checked ) {
+	//	if ( checked )
+	//		ogl->setDebugMode( GLView::DbgBounds );
+	//	else
+	//		ogl->setDebugMode( GLView::DbgNone );
+	//
+	//	ogl->update();
+	//} );
+	//connect( debugActions, &QActionGroup::triggered, [=]( QAction * action ) {
+	//	for ( auto a : debugActions->actions() ) {
+	//		if ( a == action )
+	//			continue;
+	//
+	//		a->setChecked( false );
+	//	}
+	//} );
 #endif
 
-	connect( ui->aSilhouette, &QAction::triggered, [this]( bool checked ) {
-		//ui->aDisableShading->setChecked( checked );
-		ogl->setVisMode( Scene::VisSilhouette, checked );
-	} );
+	//connect( ui->aSilhouette, &QAction::triggered, [this]( bool checked ) {
+	//	//ui->aDisableShading->setChecked( checked );
+	//	ogl->setVisMode( Scene::VisSilhouette, checked );
+	//} );
+	//
+	//connect( ui->aVisNormals, &QAction::triggered, [this]( bool checked ) {
+	//	ogl->setVisMode( Scene::VisNormalsOnly, checked );
+	//} );
+	//
+	//connect( ogl, &GLView::clicked, this, &NifSkope::select );
+	//connect( ogl, &GLView::sceneTimeChanged, inspect, &InspectView::updateTime );
+	//connect( ogl, &GLView::paintUpdate, inspect, &InspectView::refresh );
+	//connect( ogl, &GLView::viewpointChanged, [this]() {
+	//	ui->aViewTop->setChecked( false );
+	//	ui->aViewFront->setChecked( false );
+	//	ui->aViewLeft->setChecked( false );
+	//	ui->aViewUser->setChecked( false );
+	//
+	//	ogl->setOrientation( GLView::ViewDefault, false );
+	//} );
+	//
+	//connect( graphicsView, &GLGraphicsView::customContextMenuRequested, this, &NifSkope::contextMenu );
 
-	connect( ui->aVisNormals, &QAction::triggered, [this]( bool checked ) {
-		ogl->setVisMode( Scene::VisNormalsOnly, checked );
-	} );
-
-	connect( ogl, &GLView::clicked, this, &NifSkope::select );
-	connect( ogl, &GLView::sceneTimeChanged, inspect, &InspectView::updateTime );
-	connect( ogl, &GLView::paintUpdate, inspect, &InspectView::refresh );
-	connect( ogl, &GLView::viewpointChanged, [this]() {
-		ui->aViewTop->setChecked( false );
-		ui->aViewFront->setChecked( false );
-		ui->aViewLeft->setChecked( false );
-		ui->aViewUser->setChecked( false );
-
-		ogl->setOrientation( GLView::ViewDefault, false );
-	} );
-
-	connect( graphicsView, &GLGraphicsView::customContextMenuRequested, this, &NifSkope::contextMenu );
-
-	// Update Inspector widget with current index
-	connect( tree, &NifTreeView::sigCurrentIndexChanged, inspect, &InspectView::updateSelection );
+	// REFACTOR: GL
+	//// Update Inspector widget with current index
+	//connect( tree, &NifTreeView::sigCurrentIndexChanged, inspect, &InspectView::updateSelection );
 }
 
 void NifSkope::initDockWidgets()
@@ -350,7 +359,6 @@ void NifSkope::initDockWidgets()
 	dList = ui->ListDock;
 	dTree = ui->TreeDock;
 	dHeader = ui->HeaderDock;
-	dInsp = ui->InspectDock;
 	dKfm = ui->KfmDock;
 	dBrowser = ui->BrowserDock;
 
@@ -363,15 +371,17 @@ void NifSkope::initDockWidgets()
 
 	// Hide certain docks by default
 	dRefr->toggleViewAction()->setChecked( false );
-	dInsp->toggleViewAction()->setChecked( false );
 	dKfm->toggleViewAction()->setChecked( false );
 
 	dRefr->setVisible( false );
-	dInsp->setVisible( false );
 	dKfm->setVisible( false );
 
+	// REFACTOR: GL
 	// Set Inspect widget
-	dInsp->setWidget( inspect );
+	//dInsp = ui->InspectDock;
+	//dInsp->toggleViewAction()->setChecked( false );
+	//dInsp->setVisible( false );
+	//dInsp->setWidget( inspect );
 
 	connect( dList->toggleViewAction(), &QAction::triggered, tree, &NifTreeView::clearRootIndex );
 
@@ -398,9 +408,10 @@ void NifSkope::initMenu()
 	mExport = ui->menuExport;
 	mImport = ui->menuImport;
 
-	fillImportExportMenus();
-	connect( mExport, &QMenu::triggered, this, &NifSkope::sltImportExport );
-	connect( mImport, &QMenu::triggered, this, &NifSkope::sltImportExport );
+	// REFACTOR: Import/Export
+	//fillImportExportMenus();
+	//connect( mExport, &QMenu::triggered, this, &NifSkope::sltImportExport );
+	//connect( mImport, &QMenu::triggered, this, &NifSkope::sltImportExport );
 
 	// BSA Recent Files
 	mRecentArchiveFiles = new QMenu( this );
@@ -446,7 +457,8 @@ void NifSkope::initMenu()
 	}
 
 	updateRecentFileActions();
-	updateRecentArchiveActions();
+	// REFACTOR: BSA
+	//updateRecentArchiveActions();
 	//updateRecentArchiveFileActions();
 
 	// Lighting Menu
@@ -510,8 +522,8 @@ void NifSkope::initToolBars()
 
 
 	// Animate
-	connect( ui->aAnimate, &QAction::toggled, ui->tAnim, &QToolBar::setVisible );
-	connect( ui->tAnim, &QToolBar::visibilityChanged, ui->aAnimate, &QAction::setChecked );
+	//connect( ui->aAnimate, &QAction::toggled, ui->tAnim, &QToolBar::setVisible );
+	//connect( ui->tAnim, &QToolBar::visibilityChanged, ui->aAnimate, &QAction::setChecked );
 
 	/*enum AnimationStates
 	{
@@ -522,88 +534,88 @@ void NifSkope::initToolBars()
 		AnimSwitch = 0x8
 	};*/
 
-	ui->aAnimate->setData( GLView::AnimEnabled );
-	ui->aAnimPlay->setData( GLView::AnimPlay );
-	ui->aAnimLoop->setData( GLView::AnimLoop );
-	ui->aAnimSwitch->setData( GLView::AnimSwitch );
-
-	connect( ui->aAnimate, &QAction::toggled, ogl, &GLView::updateAnimationState );
-	connect( ui->aAnimPlay, &QAction::triggered, ogl, &GLView::updateAnimationState );
-	connect( ui->aAnimLoop, &QAction::toggled, ogl, &GLView::updateAnimationState );
-	connect( ui->aAnimSwitch, &QAction::toggled, ogl, &GLView::updateAnimationState );
-
+	// REFACTOR: GL
+	//ui->aAnimate->setData( GLView::AnimEnabled );
+	//ui->aAnimPlay->setData( GLView::AnimPlay );
+	//ui->aAnimLoop->setData( GLView::AnimLoop );
+	//ui->aAnimSwitch->setData( GLView::AnimSwitch );
+	//
+	//connect( ui->aAnimate, &QAction::toggled, ogl, &GLView::updateAnimationState );
+	//connect( ui->aAnimPlay, &QAction::triggered, ogl, &GLView::updateAnimationState );
+	//connect( ui->aAnimLoop, &QAction::toggled, ogl, &GLView::updateAnimationState );
+	//connect( ui->aAnimSwitch, &QAction::toggled, ogl, &GLView::updateAnimationState );
+	//
 	// Animation timeline slider
-	auto animSlider = new FloatSlider( Qt::Horizontal, true, true );
-	auto animSliderEdit = new FloatEdit( ui->tAnim );
-
-	animSlider->addEditor( animSliderEdit );
-	animSlider->setParent( ui->tAnim );
-	animSlider->setMinimumWidth( 200 );
-	animSlider->setMaximumWidth( 500 );
-	animSlider->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::MinimumExpanding );
-
-	connect( ogl, &GLView::sceneTimeChanged, animSlider, &FloatSlider::set );
-	connect( ogl, &GLView::sceneTimeChanged, animSliderEdit, &FloatEdit::set );
-	connect( animSlider, &FloatSlider::valueChanged, ogl, &GLView::setSceneTime );
-	connect( animSlider, &FloatSlider::valueChanged, animSliderEdit, &FloatEdit::setValue );
-	connect( animSliderEdit, static_cast<void (FloatEdit::*)(float)>(&FloatEdit::sigEdited), ogl, &GLView::setSceneTime );
-	connect( animSliderEdit, static_cast<void (FloatEdit::*)(float)>(&FloatEdit::sigEdited), animSlider, &FloatSlider::setValue );
-	
+	//auto animSlider = new FloatSlider( Qt::Horizontal, true, true );
+	//auto animSliderEdit = new FloatEdit( ui->tAnim );
+	//
+	//animSlider->addEditor( animSliderEdit );
+	//animSlider->setParent( ui->tAnim );
+	//animSlider->setMinimumWidth( 200 );
+	//animSlider->setMaximumWidth( 500 );
+	//animSlider->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::MinimumExpanding );
+	//
+	//connect( ogl, &GLView::sceneTimeChanged, animSlider, &FloatSlider::set );
+	//connect( ogl, &GLView::sceneTimeChanged, animSliderEdit, &FloatEdit::set );
+	//connect( animSlider, &FloatSlider::valueChanged, ogl, &GLView::setSceneTime );
+	//connect( animSlider, &FloatSlider::valueChanged, animSliderEdit, &FloatEdit::setValue );
+	//connect( animSliderEdit, static_cast<void (FloatEdit::*)(float)>(&FloatEdit::sigEdited), ogl, &GLView::setSceneTime );
+	//connect( animSliderEdit, static_cast<void (FloatEdit::*)(float)>(&FloatEdit::sigEdited), animSlider, &FloatSlider::setValue );
+	//
 	// Animations
-	animGroups = new QComboBox( ui->tAnim );
-	animGroups->setMinimumWidth( 60 );
-	animGroups->setSizeAdjustPolicy( QComboBox::AdjustToContents );
-	animGroups->setSizePolicy( QSizePolicy::Fixed, QSizePolicy::Minimum );
-	connect( animGroups, static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::activated), ogl, &GLView::setSceneSequence );
-
-	ui->tAnim->addWidget( animSlider );
-	animGroupsAction = ui->tAnim->addWidget( animGroups );
-
-	connect( ogl, &GLView::sequencesDisabled, ui->tAnim, &QToolBar::hide );
-	connect( ogl, &GLView::sequenceStopped, ui->aAnimPlay, &QAction::toggle );
-	connect( ogl, &GLView::sequenceChanged, [this]( const QString & seqname ) {
-		animGroups->setCurrentIndex( ogl->getScene()->animGroups.indexOf( seqname ) );
-	} );
-	connect( ogl, &GLView::sequencesUpdated, [this]() {
-		ui->tAnim->show();
-
-		animGroups->clear();
-		animGroups->addItems( ogl->getScene()->animGroups );
-		animGroups->setCurrentIndex( ogl->getScene()->animGroups.indexOf( ogl->getScene()->animGroup ) );
-
-		if ( animGroups->count() == 0 ) {
-			animGroupsAction->setVisible( false );
-			ui->aAnimSwitch->setVisible( false );
-		} else {
-			ui->aAnimSwitch->setVisible( animGroups->count() != 1 );
-			animGroupsAction->setVisible( true );
-			animGroups->adjustSize();
-		}
-	} );
-
-
+	//animGroups = new QComboBox( ui->tAnim );
+	//animGroups->setMinimumWidth( 60 );
+	//animGroups->setSizeAdjustPolicy( QComboBox::AdjustToContents );
+	//animGroups->setSizePolicy( QSizePolicy::Fixed, QSizePolicy::Minimum );
+	//connect( animGroups, static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::activated), ogl, &GLView::setSceneSequence );
+	//
+	//ui->tAnim->addWidget( animSlider );
+	//animGroupsAction = ui->tAnim->addWidget( animGroups );
+	//
+	//connect( ogl, &GLView::sequencesDisabled, ui->tAnim, &QToolBar::hide );
+	//connect( ogl, &GLView::sequenceStopped, ui->aAnimPlay, &QAction::toggle );
+	//connect( ogl, &GLView::sequenceChanged, [this]( const QString & seqname ) {
+	//	animGroups->setCurrentIndex( ogl->getScene()->animGroups.indexOf( seqname ) );
+	//} );
+	//connect( ogl, &GLView::sequencesUpdated, [this]() {
+	//	ui->tAnim->show();
+	//
+	//	animGroups->clear();
+	//	animGroups->addItems( ogl->getScene()->animGroups );
+	//	animGroups->setCurrentIndex( ogl->getScene()->animGroups.indexOf( ogl->getScene()->animGroup ) );
+	//
+	//	if ( animGroups->count() == 0 ) {
+	//		animGroupsAction->setVisible( false );
+	//		ui->aAnimSwitch->setVisible( false );
+	//	} else {
+	//		ui->aAnimSwitch->setVisible( animGroups->count() != 1 );
+	//		animGroupsAction->setVisible( true );
+	//		animGroups->adjustSize();
+	//	}
+	//} );
+	//
 	// LOD Toolbar
-	QToolBar * tLOD = ui->tLOD;
-
-	QSettings cfg;
-	int lodLevel = cfg.value( "GLView/LOD Level", 2 ).toInt();
-	cfg.setValue( "GLView/LOD Level", lodLevel );
-
-	QSlider * lodSlider = new QSlider( Qt::Horizontal );
-	lodSlider->setFocusPolicy( Qt::StrongFocus );
-	lodSlider->setTickPosition( QSlider::TicksBelow );
-	lodSlider->setTickInterval( 1 );
-	lodSlider->setSingleStep( 1 );
-	lodSlider->setMinimum( 0 );
-	lodSlider->setMaximum( 2 );
-	lodSlider->setValue( lodLevel );
-
-	tLOD->addWidget( lodSlider );
-	tLOD->setEnabled( false );
-
-	connect( lodSlider, &QSlider::valueChanged, ogl->getScene(), &Scene::updateLodLevel );
-	connect( lodSlider, &QSlider::valueChanged, ogl, &GLView::updateGL );
-	connect( nif, &NifModel::lodSliderChanged, [tLOD]( bool enabled ) { tLOD->setEnabled( enabled ); tLOD->setVisible( enabled ); } );
+	//QToolBar * tLOD = ui->tLOD;
+	//
+	//QSettings cfg;
+	//int lodLevel = cfg.value( "GLView/LOD Level", 2 ).toInt();
+	//cfg.setValue( "GLView/LOD Level", lodLevel );
+	//
+	//QSlider * lodSlider = new QSlider( Qt::Horizontal );
+	//lodSlider->setFocusPolicy( Qt::StrongFocus );
+	//lodSlider->setTickPosition( QSlider::TicksBelow );
+	//lodSlider->setTickInterval( 1 );
+	//lodSlider->setSingleStep( 1 );
+	//lodSlider->setMinimum( 0 );
+	//lodSlider->setMaximum( 2 );
+	//lodSlider->setValue( lodLevel );
+	//
+	//tLOD->addWidget( lodSlider );
+	//tLOD->setEnabled( false );
+	//
+	//connect( lodSlider, &QSlider::valueChanged, ogl->getScene(), &Scene::updateLodLevel );
+	//connect( lodSlider, &QSlider::valueChanged, ogl, &GLView::updateGL );
+	//connect( nif, &NifModel::lodSliderChanged, [tLOD]( bool enabled ) { tLOD->setEnabled( enabled ); tLOD->setVisible( enabled ); } );
 }
 
 void NifSkope::initConnections()
@@ -758,11 +770,13 @@ QMenu * NifSkope::lightingWidget()
 
 	// Inform ogl of changes
 	//connect( chkLighting, &QCheckBox::toggled, ogl, &GLView::lightingToggled );
-	connect( sldBrightness, &QSlider::valueChanged, ogl, &GLView::setBrightness );
-	connect( sldAmbient, &QSlider::valueChanged, ogl, &GLView::setAmbient );
-	connect( sldDeclination, &QSlider::valueChanged, ogl, &GLView::setDeclination );
-	connect( sldPlanarAngle, &QSlider::valueChanged, ogl, &GLView::setPlanarAngle );
-	connect( chkFrontal, &QToolButton::toggled, ogl, &GLView::setFrontalLight );
+
+	// REFACTOR: GL
+	//connect( sldBrightness, &QSlider::valueChanged, ogl, &GLView::setBrightness );
+	//connect( sldAmbient, &QSlider::valueChanged, ogl, &GLView::setAmbient );
+	//connect( sldDeclination, &QSlider::valueChanged, ogl, &GLView::setDeclination );
+	//connect( sldPlanarAngle, &QSlider::valueChanged, ogl, &GLView::setPlanarAngle );
+	//connect( chkFrontal, &QToolButton::toggled, ogl, &GLView::setFrontalLight );
 
 
 	// Set up QWidgetActions so they can be added to a QMenu
@@ -841,13 +855,13 @@ QWidget * NifSkope::filePathWidget( QWidget * parent )
 	return filepathWidget;
 }
 
-
-void NifSkope::archiveDlg()
-{
-	QString file = QFileDialog::getOpenFileName( this, tr( "Open Archive" ), "", "Archives (*.bsa *.ba2)" );
-	if ( !file.isEmpty() )
-		openArchive( file );
-}
+// REFACTOR: BSA
+//void NifSkope::archiveDlg()
+//{
+//	QString file = QFileDialog::getOpenFileName( this, tr( "Open Archive" ), "", "Archives (*.bsa *.ba2)" );
+//	if ( !file.isEmpty() )
+//		openArchive( file );
+//}
 
 void NifSkope::openDlg()
 {
@@ -893,7 +907,9 @@ void NifSkope::onLoadComplete( bool success, QString & fname )
 		select( nif->getHeader() );
 
 		header->setRootIndex( nif->getHeader() );
-		ogl->setOrientation( GLView::ViewFront );
+
+		// REFACTOR: GL
+		//ogl->setOrientation( GLView::ViewFront );
 
 		enableUi();
 
@@ -919,8 +935,9 @@ void NifSkope::onLoadComplete( bool success, QString & fname )
 	nif->undoStack->clear();
 	indexStack->clear();
 
+	// REFACTOR: GL
 	// Center the model on load
-	ogl->center();
+	//ogl->center();
 
 	// Hide Progress Bar
 	QTimer::singleShot( timeout, progress, SLOT( hide() ) );
@@ -988,12 +1005,12 @@ void NifSkope::enableUi()
 	ui->aSaveAs->setEnabled( true );
 	ui->aHeader->setEnabled( true );
 
-	ui->mRender->setEnabled( true );
-	ui->tAnim->setEnabled( true );
-	animGroups->clear();
 
-
-	ui->tRender->setEnabled( true );
+	// REFACTOR: GL
+	//ui->mRender->setEnabled( true );
+	//ui->tAnim->setEnabled( true );
+	//animGroups->clear();
+	//ui->tRender->setEnabled( true );
 
 	// We only need to enable the UI once, disconnect
 	disconnect( nif, &NifModel::beginUpdateHeader, this, &NifSkope::enableUi );
@@ -1074,7 +1091,8 @@ void NifSkope::restoreUi()
 	auto isPersp = settings.value( "GLView/Perspective", true ).toBool();
 	ui->aViewPerspective->setChecked( isPersp );
 
-	ogl->setProjection( isPersp );
+	// REFACTOR: GL
+	//ogl->setProjection( isPersp );
 
 	QVariant fontVar = settings.value( "UI/View Font" );
 
@@ -1096,23 +1114,26 @@ void NifSkope::setViewFont( const QFont & font )
 	header->setIconSize( QSize( metrics.width( "000" ), metrics.lineSpacing() ) );
 	kfmtree->setFont( font );
 	kfmtree->setIconSize( QSize( metrics.width( "000" ), metrics.lineSpacing() ) );
-	ogl->setFont( font );
+
+	// REFACTOR: GL
+	//ogl->setFont( font );
 }
 
 void NifSkope::resizeDone()
 {
 	isResizing = false;
 
-	// Unhide GLView, update GLGraphicsView
-	ogl->show();
-	graphicsScene->setSceneRect( graphicsView->rect() );
-	graphicsView->fitInView( graphicsScene->sceneRect() );
-
-	ogl->setUpdatesEnabled( true );
-	ogl->setDisabled( false );
-	ogl->getScene()->animate = true;
-	ogl->update();
-	ogl->resizeGL( centralWidget()->width(), centralWidget()->height() );
+	// REFACTOR: GL
+	//// Unhide GLView, update GLGraphicsView
+	//ogl->show();
+	//graphicsScene->setSceneRect( graphicsView->rect() );
+	//graphicsView->fitInView( graphicsScene->sceneRect() );
+	//
+	//ogl->setUpdatesEnabled( true );
+	//ogl->setDisabled( false );
+	//ogl->getScene()->animate = true;
+	//ogl->update();
+	//ogl->resizeGL( centralWidget()->width(), centralWidget()->height() );
 }
 
 
@@ -1146,51 +1167,52 @@ bool NifSkope::eventFilter( QObject * o, QEvent * e )
 		}
 	}
 
+	// REFACTOR: GL
 	// Filter GLGraphicsView
-	auto obj = qobject_cast<GLGraphicsView *>(o);
-	if ( !obj || obj != graphicsView )
-		return QMainWindow::eventFilter( o, e );
-
-	// Turn off animation
-	// Grab framebuffer
-	// Begin resize timer
-	// Block all Resize Events to GLView
-	if ( e->type() == QEvent::Resize ) {
-		// Hide GLView
-		ogl->hide();
-
-		if ( !isResizing  && !resizeTimer->isActive() ) {
-			ogl->getScene()->animate = false;
-			ogl->updateGL();
-
-			if ( buf.isNull() ) {
-				// Init initial buffer with solid color
-				//	Otherwise becomes random colors on release builds
-				buf = QImage( 10, 10, QImage::Format_ARGB32 );
-				buf.fill( ogl->clearColor() );
-			} else {
-				buf = ogl->grabFrameBuffer();
-			}
-
-			ogl->setUpdatesEnabled( false );
-			ogl->setDisabled( true );
-
-			isResizing = true;
-			resizeTimer->start( 300 );
-		}
-
-		return true;
-	}
-
+	//auto obj = qobject_cast<GLGraphicsView *>(o);
+	//if ( !obj || obj != graphicsView )
+	//	return QMainWindow::eventFilter( o, e );
+	//
+	//// Turn off animation
+	//// Grab framebuffer
+	//// Begin resize timer
+	//// Block all Resize Events to GLView
+	//if ( e->type() == QEvent::Resize ) {
+	//	// Hide GLView
+	//	ogl->hide();
+	//
+	//	if ( !isResizing  && !resizeTimer->isActive() ) {
+	//		ogl->getScene()->animate = false;
+	//		ogl->updateGL();
+	//
+	//		if ( buf.isNull() ) {
+	//			// Init initial buffer with solid color
+	//			//	Otherwise becomes random colors on release builds
+	//			buf = QImage( 10, 10, QImage::Format_ARGB32 );
+	//			buf.fill( ogl->clearColor() );
+	//		} else {
+	//			buf = ogl->grabFrameBuffer();
+	//		}
+	//
+	//		ogl->setUpdatesEnabled( false );
+	//		ogl->setDisabled( true );
+	//
+	//		isResizing = true;
+	//		resizeTimer->start( 300 );
+	//	}
+	//
+	//	return true;
+	//}
+	//
 	// Paint stored framebuffer over GLGraphicsView while resizing
-	if ( !buf.isNull() && isResizing && e->type() == QEvent::Paint ) {
-		QPainter painter;
-		painter.begin( graphicsView );
-		painter.drawImage( QRect( 0, 0, painter.device()->width(), painter.device()->height() ), buf );
-		painter.end();
-
-		return true;
-	}
+	//if ( !buf.isNull() && isResizing && e->type() == QEvent::Paint ) {
+	//	QPainter painter;
+	//	painter.begin( graphicsView );
+	//	painter.drawImage( QRect( 0, 0, painter.device()->width(), painter.device()->height() ), buf );
+	//	painter.end();
+	//
+	//	return true;
+	//}
 
 	return QMainWindow::eventFilter( o, e );
 }
@@ -1216,9 +1238,10 @@ void NifSkope::contextMenu( const QPoint & pos )
 	} else if ( sender() == header ) {
 		idx = header->indexAt( pos );
 		p = header->mapToGlobal( pos );
-	} else if ( sender() == graphicsView ) {
-		idx = ogl->indexAt( pos );
-		p = graphicsView->mapToGlobal( pos );
+	// REFACTOR: GL
+	//} else if ( sender() == graphicsView ) {
+	//	idx = ogl->indexAt( pos );
+	//	p = graphicsView->mapToGlobal( pos );
 	} else {
 		return;
 	}
@@ -1300,66 +1323,67 @@ void NifSkope::on_tRender_actionTriggered( QAction * action )
 	Q_UNUSED( action );
 }
 
-void NifSkope::on_aViewTop_triggered( bool checked )
-{
-	if ( checked ) {
-		ogl->setOrientation( GLView::ViewTop );
-	}
-}
-
-void NifSkope::on_aViewFront_triggered( bool checked )
-{
-	if ( checked ) {
-		ogl->setOrientation( GLView::ViewFront );
-	}
-}
-
-void NifSkope::on_aViewLeft_triggered( bool checked )
-{
-	if ( checked ) {
-		ogl->setOrientation( GLView::ViewLeft );
-	}
-}
-
-void NifSkope::on_aViewCenter_triggered()
-{
-	ogl->center();
-}
-
-void NifSkope::on_aViewFlip_triggered( bool checked )
-{
-	Q_UNUSED( checked );
-	ogl->flipOrientation();
-}
-
-void NifSkope::on_aViewPerspective_toggled( bool checked )
-{
-	ogl->setProjection( checked );
-}
-
-void NifSkope::on_aViewWalk_triggered( bool checked )
-{
-	if ( checked ) {
-		ogl->setOrientation( GLView::ViewWalk );
-	}
-}
-
-
-void NifSkope::on_aViewUserSave_triggered( bool checked )
-{ 
-	Q_UNUSED( checked );
-	ogl->saveUserView();
-	ui->aViewUser->setChecked( true );
-}
-
-
-void NifSkope::on_aViewUser_toggled( bool checked )
-{
-	if ( checked ) {
-		ogl->setOrientation( GLView::ViewUser, false );
-		ogl->loadUserView();
-	}
-}
+// REFACTOR: GL
+//void NifSkope::on_aViewTop_triggered( bool checked )
+//{
+//	if ( checked ) {
+//		ogl->setOrientation( GLView::ViewTop );
+//	}
+//}
+//
+//void NifSkope::on_aViewFront_triggered( bool checked )
+//{
+//	if ( checked ) {
+//		ogl->setOrientation( GLView::ViewFront );
+//	}
+//}
+//
+//void NifSkope::on_aViewLeft_triggered( bool checked )
+//{
+//	if ( checked ) {
+//		ogl->setOrientation( GLView::ViewLeft );
+//	}
+//}
+//
+//void NifSkope::on_aViewCenter_triggered()
+//{
+//	ogl->center();
+//}
+//
+//void NifSkope::on_aViewFlip_triggered( bool checked )
+//{
+//	Q_UNUSED( checked );
+//	ogl->flipOrientation();
+//}
+//
+//void NifSkope::on_aViewPerspective_toggled( bool checked )
+//{
+//	ogl->setProjection( checked );
+//}
+//
+//void NifSkope::on_aViewWalk_triggered( bool checked )
+//{
+//	if ( checked ) {
+//		ogl->setOrientation( GLView::ViewWalk );
+//	}
+//}
+//
+//
+//void NifSkope::on_aViewUserSave_triggered( bool checked )
+//{ 
+//	Q_UNUSED( checked );
+//	ogl->saveUserView();
+//	ui->aViewUser->setChecked( true );
+//}
+//
+//
+//void NifSkope::on_aViewUser_toggled( bool checked )
+//{
+//	if ( checked ) {
+//		ogl->setOrientation( GLView::ViewUser, false );
+//		ogl->loadUserView();
+//	}
+//}
 
 void NifSkope::on_aSettings_triggered()
 {

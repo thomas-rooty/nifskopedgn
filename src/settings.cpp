@@ -8,8 +8,9 @@
 #include "ui_settingsrender.h"
 #include "ui_settingsresources.h"
 
-#include <fsengine/fsengine.h>
-#include <fsengine/fsmanager.h>
+// REFACTOR: BSA
+//#include <fsengine/fsengine.h>
+//#include <fsengine/fsmanager.h>
 
 #include <QComboBox>
 #include <QDebug>
@@ -495,7 +496,8 @@ SettingsResources::SettingsResources( QWidget * parent ) :
 	ui->setupUi( this );
 	SettingsDialog::registerPage( parent, ui->name->text() );
 
-	archiveMgr = FSManager::get();
+	// REFACTOR: BSA
+	//archiveMgr = FSManager::get();
 
 	folders = new QStringListModel( this );
 	archives = new QStringListModel( this );
@@ -563,13 +565,14 @@ void SettingsResources::write()
 	settings.setValue( "Settings/Resources/Folders", folders->stringList() );
 	settings.setValue( "Settings/Resources/Archives", archives->stringList() );
 
+	// REFACTOR: BSA
 	// Sync FSManager to Archives list
-	archiveMgr->archives.clear();
-	for ( const QString an : archives->stringList() ) {
-		if ( !archiveMgr->archives.contains( an ) )
-			if ( auto a = FSArchiveHandler::openArchive( an ) )
-				archiveMgr->archives.insert( an, a );
-	}
+	//archiveMgr->archives.clear();
+	//for ( const QString an : archives->stringList() ) {
+	//	if ( !archiveMgr->archives.contains( an ) )
+	//		if ( auto a = FSArchiveHandler::openArchive( an ) )
+	//			archiveMgr->archives.insert( an, a );
+	//}
 
 	settings.setValue( "Settings/Resources/Alternate Extensions", ui->chkAlternateExt->isChecked() );
 
@@ -756,14 +759,15 @@ void SettingsResources::on_btnArchiveAutoDetect_clicked()
 {
 	QStringList archivesNew = archives->stringList();
 	
-	QStringList autoList = FSManager::autodetectArchives( "textures" );
-	// Fallout 4 Materials
-	autoList += FSManager::autodetectArchives( "materials" );
-	for ( const QString & archive : autoList ) {
-		if ( !archivesNew.contains( archive, Qt::CaseInsensitive ) ) {
-			archivesNew.append( archive );
-		}
-	}
+	// REFACTOR: BSA
+	//QStringList autoList = FSManager::autodetectArchives( "textures" );
+	//// Fallout 4 Materials
+	//autoList += FSManager::autodetectArchives( "materials" );
+	//for ( const QString & archive : autoList ) {
+	//	if ( !archivesNew.contains( archive, Qt::CaseInsensitive ) ) {
+	//		archivesNew.append( archive );
+	//	}
+	//}
 
 	archivesNew.removeDuplicates();
 

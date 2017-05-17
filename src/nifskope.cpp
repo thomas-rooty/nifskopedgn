@@ -37,8 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ui_nifskope.h"
 #include "ui/about_dialog.h"
 
-#include "glview.h"
-#include "gl/glscene.h"
 #include "kfmmodel.h"
 #include "nifmodel.h"
 #include "nifproxy.h"
@@ -46,7 +44,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "widgets/fileselect.h"
 #include "widgets/nifview.h"
 #include "widgets/refrbrowser.h"
-#include "widgets/inspect.h"
+// REFACTOR: GL
+//#include "widgets/inspect.h"
 
 
 #include <QAction>
@@ -71,16 +70,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QTranslator>
 #include <QUdpSocket>
 #include <QUrl>
-#include <QCryptographicHash>
 
 #include <QListView>
 #include <QTreeView>
 #include <QStandardItemModel>
 
-#include <fsengine/bsa.h>
-#include <fsengine/fsmanager.h>
+#include <algorithm>
 
 #ifdef WIN32
+#  define NOMINMAX
 #  define WINDOWS_LEAN_AND_MEAN
 #  include "windows.h"
 #endif
@@ -155,8 +153,9 @@ NifSkope::NifSkope()
 	if ( !options )
 		options = new SettingsDialog;
 
+	// REFACTOR
 	// Migrate settings from older versions of NifSkope
-	migrateSettings();
+	//migrateSettings();
 
 	// Update Settings struct from registry
 	updateSettings();
@@ -229,16 +228,6 @@ NifSkope::NifSkope()
 	refrbrwsr = ui->refrBrowser;
 	refrbrwsr->setNifModel( nif );
 
-	// Archive Browser
-	bsaView = ui->bsaView;
-	connect( bsaView, &QTreeView::doubleClicked, this, &NifSkope::openArchiveFile );
-
-	bsaModel = new BSAModel( this );
-	bsaProxyModel = new BSAProxyModel( this );
-
-	// Empty Model for swapping out before model fill
-	emptyModel = new QStandardItemModel( this );
-
 	// Connect models with views
 	/* ********************** */
 
@@ -250,20 +239,26 @@ NifSkope::NifSkope()
 	connect( header, &NifTreeView::customContextMenuRequested, this, &NifSkope::contextMenu );
 	connect( kfmtree, &NifTreeView::customContextMenuRequested, this, &NifSkope::contextMenu );
 
-	// Create GLView
-	/* ********************** */
 
-	ogl = GLView::create( this );
-	ogl->setObjectName( "OGL1" );
-	ogl->setNif( nif );
-	ogl->installEventFilter( this );
+	// REFACTOR: BSA
+	//// Archive Browser
+	//bsaView = ui->bsaView;
+	//connect( bsaView, &QTreeView::doubleClicked, this, &NifSkope::openArchiveFile );
+	//bsaModel = new BSAModel( this );
+	//bsaProxyModel = new BSAProxyModel( this );
+	//// Empty Model for swapping out before model fill
+	//emptyModel = new QStandardItemModel( this );
 
-	// Create InspectView
-	/* ********************** */
-	
-	inspect = new InspectView;
-	inspect->setNifModel( nif );
-	inspect->setScene( ogl->getScene() );
+	// REFACTOR: GL
+	//// Create GLView
+	//ogl = GLView::create( this );
+	//ogl->setObjectName( "OGL1" );
+	//ogl->setNif( nif );
+	//ogl->installEventFilter( this );
+	//// Create InspectView
+	//inspect = new InspectView;
+	//inspect->setNifModel( nif );
+
 
 	// Create Progress Bar
 	/* ********************** */
@@ -284,20 +279,11 @@ NifSkope::NifSkope()
 	 */
 
 	// Init Scene and View
-	graphicsScene = new QGraphicsScene( this );
-	graphicsView = new GLGraphicsView( this );
-	graphicsView->setScene( graphicsScene );
-	graphicsView->setRenderHint( QPainter::Antialiasing );
-	graphicsView->setRenderHint( QPainter::SmoothPixmapTransform );
-	graphicsView->setCacheMode( QGraphicsView::CacheNone );
-	graphicsView->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
-	graphicsView->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
-	//graphicsView->setOptimizationFlags( QGraphicsView::DontSavePainterState | QGraphicsView::DontAdjustForAntialiasing );
+
 
 	// Set central widget and viewport
-	setCentralWidget( graphicsView );
-	graphicsView->setViewport( ogl );
-	graphicsView->setViewportUpdateMode( QGraphicsView::FullViewportUpdate );
+	setCentralWidget( new QWidget() );
+
 	
 	setContextMenuPolicy( Qt::NoContextMenu );
 
@@ -334,7 +320,8 @@ void NifSkope::exitRequested()
 	// Must disconnect from this signal as it's set once for each widget for some reason
 	disconnect( qApp, &QApplication::lastWindowClosed, this, &NifSkope::exitRequested );
 
-	FSManager::del();
+	// REFACTOR: BSA
+	//FSManager::del();
 
 	if ( options ) {
 		delete options;
@@ -422,19 +409,11 @@ void NifSkope::select( const QModelIndex & index )
 		indexStack->push( new SelectIndexCommand( this, currentIdx, prevIdx ) );
 	}
 
-	// TEST: Cast sender to GLView
-	//auto s = qobject_cast<GLView *>(sender());
-	//if ( s )
-	//	qDebug() << sender()->objectName();
-
-	if ( sender() != ogl ) {
-		ogl->setCurrentIndex( idx );
-	}
-
-	if ( sender() == ogl ) {
-		if ( dList->isVisible() )
-			dList->raise();
-	}
+	// REFACTOR: GL
+	//if ( sender() == ogl ) {
+	//	if ( dList->isVisible() )
+	//		dList->raise();
+	//}
 
 	// Switch to Block Details tab if not selecting inside Header tab
 	if ( sender() != header ) {
@@ -489,11 +468,6 @@ void NifSkope::select( const QModelIndex & index )
 				tree->setRootIndex( root );
 
 			tree->setCurrentIndex( idx.sibling( idx.row(), 0 ) );
-
-			// Expand BSShaderTextureSet by default
-			//if ( root.child( 1, 0 ).data().toString() == "Textures" )
-			//	tree->expandAll();
-
 		} else {
 			if ( tree->rootIndex() != QModelIndex() )
 				tree->setRootIndex( QModelIndex() );
@@ -604,8 +578,9 @@ void NifSkope::updateAllRecentFileActions()
 		NifSkope * win = qobject_cast<NifSkope *>(widget);
 		if ( win ) {
 			win->updateRecentFileActions();
-			win->updateRecentArchiveActions();
-			win->updateRecentArchiveFileActions();
+			// REFACTOR: BSA
+			//win->updateRecentArchiveActions();
+			//win->updateRecentArchiveFileActions();
 		}
 	}
 }
@@ -623,43 +598,19 @@ void NifSkope::setCurrentFile( const QString & filename )
 
 	setWindowFilePath( currentFile );
 
+	// REFACTOR: BSA
 	// Avoid adding files opened from BSAs to Recent Files
-	QFileInfo file( currentFile );
-	if ( !file.exists() && !file.isAbsolute() ) {
-		setCurrentArchiveFile( filename );
-		return;
-	}
+	//QFileInfo file( currentFile );
+	//if ( !file.exists() && !file.isAbsolute() ) {
+	//	setCurrentArchiveFile( filename );
+	//	return;
+	//}
 
 	QSettings settings;
 	QStringList files = settings.value( "File/Recent File List" ).toStringList();
 	::updateRecentFiles( files, currentFile );
 
 	settings.setValue( "File/Recent File List", files );
-
-	updateAllRecentFileActions();
-}
-
-void NifSkope::setCurrentArchiveFile( const QString & filepath )
-{
-	QString bsa = filepath.split( "/" ).first();
-	if ( !bsa.endsWith( ".bsa", Qt::CaseInsensitive ) && !bsa.endsWith( ".ba2", Qt::CaseInsensitive ) )
-		return;
-
-	// Strip BSA name from beginning of path
-	QString path = filepath;
-	path.replace( bsa + "/", "" );
-
-	QSettings settings;
-	QHash<QString, QVariant> hash = settings.value( "File/Recent Archive Files" ).toHash();
-
-	// Retrieve and update existing Recent Files for BSA
-	QStringList filepaths = hash.value( bsa ).toStringList();
-	::updateRecentFiles( filepaths, path );
-
-	// Replace BSA's Recent Files
-	hash[bsa] = filepaths;
-
-	settings.setValue( "File/Recent Archive Files", hash );
 
 	updateAllRecentFileActions();
 }
@@ -674,228 +625,222 @@ void NifSkope::clearCurrentFile()
 	updateAllRecentFileActions();
 }
 
-void NifSkope::setCurrentArchive( BSA * bsa )
-{
-	currentArchive = bsa;
+// REFACTOR: BSA
+//void NifSkope::setCurrentArchiveFile( const QString & filepath )
+//{
+//	QString bsa = filepath.split( "/" ).first();
+//	if ( !bsa.endsWith( ".bsa", Qt::CaseInsensitive ) && !bsa.endsWith( ".ba2", Qt::CaseInsensitive ) )
+//		return;
+//
+//	// Strip BSA name from beginning of path
+//	QString path = filepath;
+//	path.replace( bsa + "/", "" );
+//
+//	QSettings settings;
+//	QHash<QString, QVariant> hash = settings.value( "File/Recent Archive Files" ).toHash();
+//
+//	// Retrieve and update existing Recent Files for BSA
+//	QStringList filepaths = hash.value( bsa ).toStringList();
+//	::updateRecentFiles( filepaths, path );
+//
+//	// Replace BSA's Recent Files
+//	hash[bsa] = filepaths;
+//
+//	settings.setValue( "File/Recent Archive Files", hash );
+//
+//	updateAllRecentFileActions();
+//}
+//
+//void NifSkope::setCurrentArchive( BSA * bsa )
+//{
+//	currentArchive = bsa;
+//
+//	QString file = currentArchive->path();
+//
+//	QSettings settings;
+//	QStringList files = settings.value( "File/Recent Archive List" ).toStringList();
+//	::updateRecentFiles( files, file );
+//
+//	settings.setValue( "File/Recent Archive List", files );
+//
+//	updateAllRecentFileActions();
+//}
+//
+//void NifSkope::clearCurrentArchive()
+//{
+//	QSettings settings;
+//	QStringList files = settings.value( "File/Recent Archive List" ).toStringList();
+//
+//	files.removeAll( currentArchive->path() );
+//	settings.setValue( "File/Recent Archive List", files );
+//
+//	updateAllRecentFileActions();
+//}
+//
+//void NifSkope::updateRecentArchiveActions()
+//{
+//	QSettings settings;
+//	QStringList files = settings.value( "File/Recent Archive List" ).toStringList();
+//
+//	int numRecentFiles = ::updateRecentActions( recentArchiveActs, files );
+//
+//	ui->mRecentArchives->setEnabled( numRecentFiles > 0 );
+//}
+//
+//void NifSkope::updateRecentArchiveFileActions()
+//{
+//	QSettings settings;
+//	QHash<QString, QVariant> hash = settings.value( "File/Recent Archive Files" ).toHash();
+//
+//	if ( !currentArchive )
+//		return;
+//
+//	QString key = currentArchive->name();
+//
+//	QStringList files = hash.value( key ).toStringList();
+//
+//	int numRecentFiles = ::updateRecentActions( recentArchiveFileActs, files );
+//
+//	mRecentArchiveFiles->setEnabled( numRecentFiles > 0 );
+//}
 
-	QString file = currentArchive->path();
 
-	QSettings settings;
-	QStringList files = settings.value( "File/Recent Archive List" ).toStringList();
-	::updateRecentFiles( files, file );
+// REFACTOR: BSA
+//void NifSkope::openArchive( const QString & archive )
+//{
+//	// Clear memory from previously opened archives
+//	bsaModel->clear();
+//	bsaProxyModel->clear();
+//	bsaProxyModel->setSourceModel( emptyModel );
+//	bsaView->setModel( emptyModel );
+//	bsaView->setSortingEnabled( false );
+//
+//	archiveHandler.reset();
+//
+//	archiveHandler = FSArchiveHandler::openArchive( archive );
+//	if ( !archiveHandler ) {
+//		qCWarning( nsIo ) << "The BSA could not be opened.";
+//		return;
+//	}
+//
+//	auto bsa = archiveHandler->getArchive<BSA *>();
+//	if ( bsa ) {
+//
+//		setCurrentArchive( bsa );
+//
+//		// Models
+//		bsaModel->init();
+//
+//		// Populate model from BSA
+//		bsa->fillModel( bsaModel, "meshes" );
+//
+//		if ( bsaModel->rowCount() == 0 ) {
+//			qCWarning( nsIo ) << "The BSA does not contain any meshes.";
+//			clearCurrentArchive();
+//			return;
+//		}
+//
+//		// Set proxy and view only after filling source model
+//		bsaProxyModel->setSourceModel( bsaModel );
+//		bsaView->setModel( bsaProxyModel );
+//		bsaView->setSortingEnabled( true );
+//
+//		bsaView->hideColumn( 1 );
+//		bsaView->setColumnWidth( 0, 300 );
+//		bsaView->setColumnWidth( 2, 50 );
+//
+//		// Sort proxy after model/view is populated
+//		bsaProxyModel->sort( 0, Qt::AscendingOrder );
+//		bsaProxyModel->setFiletypes( { ".nif", ".bto", ".btr" } );
+//		bsaProxyModel->resetFilter();
+//
+//		// Set filename label
+//		ui->bsaName->setText( currentArchive->name() );
+//
+//		ui->bsaFilter->setEnabled( true );
+//		ui->bsaFilenameOnly->setEnabled( true );
+//
+//		// Bring tab to front
+//		dBrowser->raise();
+//
+//		// Filter
+//		auto filterTimer = new QTimer( this );
+//		filterTimer->setSingleShot( true );
+//
+//		connect( ui->bsaFilter, &QLineEdit::textChanged, [filterTimer]() { filterTimer->start( 300 ); } );
+//		connect( filterTimer, &QTimer::timeout, [this]() {
+//			auto text = ui->bsaFilter->text();
+//
+//			bsaProxyModel->setFilterRegExp( QRegExp( text, Qt::CaseInsensitive, QRegExp::Wildcard ) );
+//			bsaView->expandAll();
+//
+//			if ( text.isEmpty() ) {
+//				bsaView->collapseAll();
+//				bsaProxyModel->resetFilter();
+//			}
+//				
+//		} );
+//
+//		connect( ui->bsaFilenameOnly, &QCheckBox::toggled, bsaProxyModel, &BSAProxyModel::setFilterByNameOnly );
+//
+//		// Update filter when switching open archives
+//		filterTimer->start( 0 );
+//	}
+//}
+//
+//void NifSkope::openArchiveFile( const QModelIndex & index )
+//{
+//	QString filepath = index.sibling( index.row(), 1 ).data( Qt::EditRole ).toString();
+//
+//	if ( !filepath.isEmpty() )
+//		openArchiveFileString( currentArchive, filepath );
+//}
+//
+//void NifSkope::openArchiveFileString( BSA * bsa, const QString & filepath )
+//{
+//	if ( bsa->hasFile( filepath ) ) {
+//		if ( !saveConfirm() )
+//			return;
+//
+//		// Read data from BSA
+//		QByteArray data;
+//		bsa->fileContents( filepath, data );
+//
+//		// Format like "BSANAME.BSA/path/to/file.nif"
+//		QString path = bsa->name() + "/" + filepath;
+//
+//		QBuffer buf;
+//		buf.setData( data );
+//		if ( buf.open( QBuffer::ReadOnly ) ) {
+//
+//			emit beginLoading();
+//
+//			bool loaded = nif->load( buf );
+//			if ( loaded )
+//				setCurrentFile( path );
+//
+//			emit completeLoading( loaded, path );
+//
+//
+//			buf.close();
+//		}
+//	}
+//}
 
-	settings.setValue( "File/Recent Archive List", files );
-
-	updateAllRecentFileActions();
-}
-
-void NifSkope::clearCurrentArchive()
-{
-	QSettings settings;
-	QStringList files = settings.value( "File/Recent Archive List" ).toStringList();
-
-	files.removeAll( currentArchive->path() );
-	settings.setValue( "File/Recent Archive List", files );
-
-	updateAllRecentFileActions();
-}
-
-void NifSkope::updateRecentArchiveActions()
-{
-	QSettings settings;
-	QStringList files = settings.value( "File/Recent Archive List" ).toStringList();
-
-	int numRecentFiles = ::updateRecentActions( recentArchiveActs, files );
-
-	ui->mRecentArchives->setEnabled( numRecentFiles > 0 );
-}
-
-void NifSkope::updateRecentArchiveFileActions()
-{
-	QSettings settings;
-	QHash<QString, QVariant> hash = settings.value( "File/Recent Archive Files" ).toHash();
-
-	if ( !currentArchive )
-		return;
-
-	QString key = currentArchive->name();
-
-	QStringList files = hash.value( key ).toStringList();
-
-	int numRecentFiles = ::updateRecentActions( recentArchiveFileActs, files );
-
-	mRecentArchiveFiles->setEnabled( numRecentFiles > 0 );
-}
-
-QByteArray fileChecksum( const QString &fileName, QCryptographicHash::Algorithm hashAlgorithm )
-{
-	QFile f( fileName );
-	if ( f.open( QFile::ReadOnly ) ) {
-		QCryptographicHash hash( hashAlgorithm );
-		if ( hash.addData( &f ) ) {
-			return hash.result();
-		}
-	}
-	return QByteArray();
-}
-
-void NifSkope::checkFile( QFileInfo fInfo, QByteArray filehash )
-{
-	QString fname = fInfo.fileName();
-	QString fpath = fInfo.filePath();
-	QDir::temp().mkdir( "NifSkope" );
-	QString tmpDir = QDir::tempPath() + "/NifSkope";
-	QDir tmp( tmpDir );
-	QString tmpFile = tmpDir + "/" + fInfo.fileName();
-
-	emit beginSave();
-	bool saved = nif->saveToFile( tmpFile );
-	if ( saved ) {
-		auto filehash2 = fileChecksum( tmpFile, QCryptographicHash::Md5 );
-
-		if ( filehash == filehash2 ) {
-			tmp.remove( fname );
-		} else {
-			QString err = "An MD5 hash comparison indicates this file will not be 100% identical upon saving. This could indicate underlying issues with the data in this file.";
-			Message::warning( this, err, fpath );
-#ifdef QT_NO_DEBUG
-			tmp.remove( fname );
-#endif
-		}
-	}
-	emit completeSave( saved, fpath );
-}
-
-void NifSkope::openArchive( const QString & archive )
-{
-	// Clear memory from previously opened archives
-	bsaModel->clear();
-	bsaProxyModel->clear();
-	bsaProxyModel->setSourceModel( emptyModel );
-	bsaView->setModel( emptyModel );
-	bsaView->setSortingEnabled( false );
-
-	archiveHandler.reset();
-
-	archiveHandler = FSArchiveHandler::openArchive( archive );
-	if ( !archiveHandler ) {
-		qCWarning( nsIo ) << "The BSA could not be opened.";
-		return;
-	}
-
-	auto bsa = archiveHandler->getArchive<BSA *>();
-	if ( bsa ) {
-
-		setCurrentArchive( bsa );
-
-		// Models
-		bsaModel->init();
-
-		// Populate model from BSA
-		bsa->fillModel( bsaModel, "meshes" );
-
-		if ( bsaModel->rowCount() == 0 ) {
-			qCWarning( nsIo ) << "The BSA does not contain any meshes.";
-			clearCurrentArchive();
-			return;
-		}
-
-		// Set proxy and view only after filling source model
-		bsaProxyModel->setSourceModel( bsaModel );
-		bsaView->setModel( bsaProxyModel );
-		bsaView->setSortingEnabled( true );
-
-		bsaView->hideColumn( 1 );
-		bsaView->setColumnWidth( 0, 300 );
-		bsaView->setColumnWidth( 2, 50 );
-
-		// Sort proxy after model/view is populated
-		bsaProxyModel->sort( 0, Qt::AscendingOrder );
-		bsaProxyModel->setFiletypes( { ".nif", ".bto", ".btr" } );
-		bsaProxyModel->resetFilter();
-
-		// Set filename label
-		ui->bsaName->setText( currentArchive->name() );
-
-		ui->bsaFilter->setEnabled( true );
-		ui->bsaFilenameOnly->setEnabled( true );
-
-		// Bring tab to front
-		dBrowser->raise();
-
-		// Filter
-		auto filterTimer = new QTimer( this );
-		filterTimer->setSingleShot( true );
-
-		connect( ui->bsaFilter, &QLineEdit::textChanged, [filterTimer]() { filterTimer->start( 300 ); } );
-		connect( filterTimer, &QTimer::timeout, [this]() {
-			auto text = ui->bsaFilter->text();
-
-			bsaProxyModel->setFilterRegExp( QRegExp( text, Qt::CaseInsensitive, QRegExp::Wildcard ) );
-			bsaView->expandAll();
-
-			if ( text.isEmpty() ) {
-				bsaView->collapseAll();
-				bsaProxyModel->resetFilter();
-			}
-				
-		} );
-
-		connect( ui->bsaFilenameOnly, &QCheckBox::toggled, bsaProxyModel, &BSAProxyModel::setFilterByNameOnly );
-
-		// Update filter when switching open archives
-		filterTimer->start( 0 );
-	}
-}
-
-void NifSkope::openArchiveFile( const QModelIndex & index )
-{
-	QString filepath = index.sibling( index.row(), 1 ).data( Qt::EditRole ).toString();
-
-	if ( !filepath.isEmpty() )
-		openArchiveFileString( currentArchive, filepath );
-}
-
-void NifSkope::openArchiveFileString( BSA * bsa, const QString & filepath )
-{
-	if ( bsa->hasFile( filepath ) ) {
-		if ( !saveConfirm() )
-			return;
-
-		// Read data from BSA
-		QByteArray data;
-		bsa->fileContents( filepath, data );
-
-		// Format like "BSANAME.BSA/path/to/file.nif"
-		QString path = bsa->name() + "/" + filepath;
-
-		QBuffer buf;
-		buf.setData( data );
-		if ( buf.open( QBuffer::ReadOnly ) ) {
-
-			emit beginLoading();
-
-			bool loaded = nif->load( buf );
-			if ( loaded )
-				setCurrentFile( path );
-
-			emit completeLoading( loaded, path );
-
-			//if ( loaded ) {
-			//	QCryptographicHash hash( QCryptographicHash::Md5 );
-			//	hash.addData( data );
-			//	filehash = hash.result();
-			//
-			//	QFileInfo f( path );
-			//	
-			//	checkFile( f, filehash );
-			//}
-
-			buf.close();
-		}
-	}
-}
-
+// REFACTOR: BSA
+//void NifSkope::openRecentArchive()
+//{
+//	QAction * action = qobject_cast<QAction *>(sender());
+//	if ( action )
+//		openArchive( action->data().toString() );
+//}
+//
+//void NifSkope::openRecentArchiveFile()
+//{
+//	QAction * action = qobject_cast<QAction *>(sender());
+//	if ( action )
+//		openArchiveFileString( currentArchive, action->data().toString() );
+//}
 
 void NifSkope::openFile( QString & file )
 {
@@ -914,21 +859,6 @@ void NifSkope::openRecentFile()
 	if ( action )
 		loadFile( action->data().toString() );
 }
-
-void NifSkope::openRecentArchive()
-{
-	QAction * action = qobject_cast<QAction *>(sender());
-	if ( action )
-		openArchive( action->data().toString() );
-}
-
-void NifSkope::openRecentArchiveFile()
-{
-	QAction * action = qobject_cast<QAction *>(sender());
-	if ( action )
-		openArchiveFileString( currentArchive, action->data().toString() );
-}
-
 
 void NifSkope::openFiles( QStringList & files )
 {
@@ -984,12 +914,6 @@ void NifSkope::load()
 	bool loaded = nif->loadFromFile( fname );
 
 	emit completeLoading( loaded, fname );
-
-	//if ( loaded ) {
-	//	filehash = fileChecksum( fname, QCryptographicHash::Md5 );
-	//
-	//	checkFile( f, filehash );
-	//}
 }
 
 void NifSkope::save()
@@ -1374,166 +1298,3 @@ int main( int argc, char * argv[] )
 	return 0;
 }
 
-
-void NifSkope::migrateSettings() const
-{
-	// Load current NifSkope settings
-	QSettings cfg;
-	// Load pre-1.2 NifSkope settings
-	QSettings cfg1_1( "NifTools", "NifSkope" );
-	// Load NifSkope 1.2 settings
-	QSettings cfg1_2( "NifTools", "NifSkope 1.2" );
-
-	// Current version strings
-	QString curVer = NIFSKOPE_VERSION;
-	QString curQtVer = QT_VERSION_STR;
-	QString curDisplayVer = NifSkopeVersion::rawToDisplay( NIFSKOPE_VERSION, true );
-
-	// New Install, no need to migrate anything
-	if ( !cfg.value( "Version" ).isValid() && !cfg1_1.value( "version" ).isValid() ) {
-		// QSettings constructor creates an empty folder, so clear it.
-		cfg1_1.clear();
-
-		// Set version values
-		cfg.setValue( "Version", curVer );
-		cfg.setValue( "Qt Version", curQtVer );
-		cfg.setValue( "Display Version", curDisplayVer );
-
-		return;
-	}
-
-	QString prevVer = curVer;
-	QString prevQtVer = cfg.value( "Qt Version" ).toString();
-	QString prevDisplayVer = cfg.value( "Display Version" ).toString();
-
-	// Set full granularity for version comparisons
-	NifSkopeVersion::setNumParts( 7 );
-
-	// Test migration lambda
-	//	Note: Sets value of prevVer
-	auto testMigration = [&prevVer]( QSettings & migrateFrom, const char * migrateTo ) {
-		if ( migrateFrom.value( "version" ).isValid() && !migrateFrom.value( "migrated" ).isValid() ) {
-			prevVer = migrateFrom.value( "version" ).toString();
-
-			NifSkopeVersion tmp( prevVer );
-			if ( tmp < migrateTo )
-				return true;
-		}
-		return false;
-	};
-
-	// Migrate lambda
-	//	Using a QHash of registry keys (stored in version.h), migrates from one version to another.
-	auto migrate = []( QSettings & migrateFrom, QSettings & migrateTo, const QHash<QString, QString> migration ) {
-		QHash<QString, QString>::const_iterator i;
-		for ( i = migration.begin(); i != migration.end(); ++i ) {
-			QVariant val = migrateFrom.value( i.key() );
-
-			if ( val.isValid() ) {
-				migrateTo.setValue( i.value(), val );
-			}
-		}
-
-		migrateFrom.setValue( "migrated", true );
-	};
-
-	// NOTE: These set `prevVer` and must come before setting `oldVersion`
-	bool migrateFrom1_1 = testMigration( cfg1_1, "1.2.0" );
-	bool migrateFrom1_2 = testMigration( cfg1_2, "2.0" );
-
-	if ( !migrateFrom1_1 && !migrateFrom1_2 ) {
-		prevVer = cfg.value( "Version" ).toString();
-	}
-
-	NifSkopeVersion oldVersion( prevVer );
-	NifSkopeVersion newVersion( curVer );
-
-	// Check NifSkope Version
-	//	Assure full granularity here
-	NifSkopeVersion::setNumParts( 7 );
-	if ( oldVersion != newVersion ) {
-
-		// Migrate from 1.1.x to 1.2
-		if ( migrateFrom1_1 ) {
-			qDebug() << "Migrating from 1.1 to 1.2";
-			migrate( cfg1_1, cfg1_2, migrateTo1_2 );
-		}
-
-		// Migrate from 1.2.x to 2.0
-		if ( migrateFrom1_2 ) {
-			qDebug() << "Migrating from 1.2 to 2.0";
-			migrate( cfg1_2, cfg, migrateTo2_0 );
-		}
-
-		// Set new Version
-		cfg.setValue( "Version", curVer );
-
-		if ( prevDisplayVer != curDisplayVer )
-			cfg.setValue( "Display Version", curDisplayVer );
-
-		// Migrate to new Settings
-		if ( oldVersion <= NifSkopeVersion( "2.0.dev1" ) ) {
-			qDebug() << "Migrating to new Settings";
-
-			// Sanitize backslashes
-			auto sanitize = []( QVariant oldVal ) {
-				QStringList sanitized;
-				for ( const QString & archive : oldVal.toStringList() ) {
-					if ( archive == "AUTO" ) {
-						sanitized.append( FSManager::autodetectArchives() );
-						continue;
-					}
-
-					sanitized.append( QDir::fromNativeSeparators( archive ) );
-				}
-
-				return sanitized;
-			};
-
-			QVariant foldersVal = cfg.value( "Settings/Resources/Folders" );
-			if ( foldersVal.toStringList().isEmpty() ) {
-				QVariant oldVal = cfg.value( "Render Settings/Texture Folders" );
-				if ( !oldVal.isNull() ) {
-					cfg.setValue( "Settings/Resources/Folders", sanitize( oldVal ) );
-				}
-			}
-
-			QVariant archivesVal = cfg.value( "Settings/Resources/Archives" );
-			if ( archivesVal.toStringList().isEmpty() ) {
-				QVariant oldVal = cfg.value( "FSEngine/Archives" );
-				if ( !oldVal.isNull() ) {
-					cfg.setValue( "Settings/Resources/Archives", sanitize( oldVal ) );
-				}
-			}
-
-			// Update archive handler
-			FSManager::get()->initialize();
-			
-			// Remove old keys
-
-			cfg.remove( "FSEngine" );
-			cfg.remove( "Render Settings" );
-			cfg.remove( "Settings/Language" );
-			cfg.remove( "Settings/Startup Version" );
-		}
-	}
-
-#ifdef QT_NO_DEBUG
-	// Check Qt Version
-	if ( curQtVer != prevQtVer ) {
-		// Check all keys and delete all QByteArrays
-		// to prevent portability problems between Qt versions
-		QStringList keys = cfg.allKeys();
-
-		for ( const auto& key : keys ) {
-			if ( cfg.value( key ).type() == QVariant::ByteArray ) {
-				qDebug() << "Removing Qt version-specific settings" << key
-					<< "while migrating settings from previous version";
-				cfg.remove( key );
-			}
-		}
-
-		cfg.setValue( "Qt Version", curQtVer );
-	}
-#endif
-}
