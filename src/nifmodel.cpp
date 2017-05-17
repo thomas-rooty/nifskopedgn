@@ -209,6 +209,7 @@ void NifModel::clear()
 	QString header_string;
 
 	if ( version <= 0x0A000100 ) {
+		// 10.0.1.0 and lower
 		header_string = "NetImmerse File Format, Version ";
 	} else {
 		header_string = "Gamebryo File Format, Version ";
@@ -337,6 +338,7 @@ void NifModel::updateHeader()
 			blocktypeindices.append( bTypeIdx );
 
 			if ( version >= 0x14020000 && idxBlockSize ) {
+				// 20.2.0.0 and higher
 				updateArrays( block );
 				blocksizes.append( blockSize( block ) );
 			}
@@ -349,6 +351,7 @@ void NifModel::updateHeader()
 		updateArrayItem( idxBlockTypeIndices );
 
 		if ( version >= 0x14020000 && idxBlockSize ) {
+			// 20.2.0.0 and higher
 			updateArrayItem( idxBlockSize );
 		}
 
@@ -359,7 +362,7 @@ void NifModel::updateHeader()
 			idxBlockSize->setArray<int>( blocksizes );
 		restoreState();
 
-		// For 20.1 and above strings are saved in the header.  Max String Length must be updated.
+		// For 20.1.0.3 and above strings are saved in the header.  Max String Length must be updated.
 		if ( version >= 0x14010003 ) {
 			int maxlen = 0;
 			int nstrings = get<uint>( header, "Num Strings" );
@@ -1073,6 +1076,7 @@ void NifModel::insertType( NifItem * parent, const NifData & data, int at )
 		// Kludge for string conversion.
 		//  Ensure that the string type is correct for the nif version
 		if ( item->value().type() == NifValue::tString || item->value().type() == NifValue::tFilePath ) {
+			// Change between sized string and header string at 20.1.0.3
 			item->value().changeType( version < 0x14010003 ? NifValue::tSizedString : NifValue::tStringIndex );
 		}
 	}
@@ -1155,6 +1159,7 @@ QVariant NifModel::data( const QModelIndex & idx, int role ) const
 
 		if ( item->name() == "Controlled Blocks" ) {
 			if ( version >= 0x14010003 ) {
+				// 20.1.0.3 and higher
 				buddy = getIndex( index, "Node Name" );
 
 				if ( buddy.isValid() )
@@ -1163,6 +1168,7 @@ QVariant NifModel::data( const QModelIndex & idx, int role ) const
 				if ( buddy.isValid() )
 					return data( buddy, role );
 			} else if ( version <= 0x14000005 ) {
+				// 20.0.0.5 and lower
 				buddy = getIndex( index, "Node Name Offset" );
 
 				if ( buddy.isValid() )
@@ -1194,7 +1200,7 @@ QVariant NifModel::data( const QModelIndex & idx, int role ) const
 				break;
 			case TypeCol:
 				{
-					// Display `Ref<BlockType>` in Type column
+					// Display `Template<Type>`, e.g. "Ref<NiAVObject>" in Type column
 					if ( !item->temp().isEmpty() ) {
 						NifItem * i = item;
 
@@ -1558,6 +1564,7 @@ bool NifModel::setData( const QModelIndex & index, const QVariant & value, int r
 			NifValue & val = item->value();
 
 			if ( val.type() == NifValue::tString || val.type() == NifValue::tFilePath ) {
+				// Change between sized string and header string at 20.1.0.3
 				val.changeType( version < 0x14010003 ? NifValue::tSizedString : NifValue::tStringIndex );
 				assignString( index, value.toString(), true );
 			} else {
@@ -1770,6 +1777,7 @@ bool NifModel::load( QIODevice & device )
 		curpos = device.pos();
 
 		if ( version >= 0x0303000d ) {
+			// 3.3.0.13 and higher
 			// read in the NiBlocks
 			QString prevblktyp;
 
@@ -1784,6 +1792,7 @@ bool NifModel::load( QIODevice & device )
 				try
 				{
 					if ( version >= 0x0a000000 ) {
+						// 10.0.0.0 and higher
 						// block types are stored in the header for versions above 10.x.x.x
 						//	the upper bit or the blocktypeindex seems to be related to PhysX
 						int blktypidx = get<int>( index( c, 0, getIndex( createIndex( header->row(), 0, header ), "Block Type Index" ) ) );
@@ -1793,6 +1802,7 @@ bool NifModel::load( QIODevice & device )
 						//		 these four bytes on the havok blocks
 						//		 (see for instance meshes/architecture/basementsections/ungrdltraphingedoor.nif)
 						if ( (version < 0x0a020000) && ( !blktyp.startsWith( "bhk" ) ) ) {
+							// Below 10.2.0.0
 							int dummy;
 							device.read( (char *)&dummy, 4 );
 
@@ -2012,12 +2022,15 @@ bool NifModel::save( QIODevice & device ) const
 
 		if ( itemType( index( c, 0 ) ) == "NiBlock" ) {
 			if ( version > 0x0a000000 ) {
+				// Above 10.0.0.0
 				if ( version < 0x0a020000 ) {
+					// Below 10.2.0.0
 					int null = 0;
 					device.write( (char *)&null, 4 );
 				}
 			} else {
 				if ( version < 0x0303000d ) {
+					// Below 3.3.0.13
 					if ( rootLinks.contains( c - 1 ) ) {
 						QString string = "Top Level Object";
 						int len = string.length();
@@ -2032,6 +2045,7 @@ bool NifModel::save( QIODevice & device ) const
 				device.write( string.toLatin1().constData(), len );
 
 				if ( version < 0x0303000d ) {
+					// Below 3.3.0.13
 					device.write( (char *)&c, 4 );
 				}
 			}
@@ -2045,6 +2059,7 @@ bool NifModel::save( QIODevice & device ) const
 	}
 
 	if ( version < 0x0303000d ) {
+		// Below 3.3.0.13
 		QString string = "End Of File";
 		int len = string.length();
 		device.write( (char *)&len, 4 );
@@ -2172,11 +2187,14 @@ int NifModel::fileOffset( const QModelIndex & index ) const
 		for ( int c = 0; c < root->childCount(); c++ ) {
 			if ( c > 0 && c <= getBlockCount() ) {
 				if ( version > 0x0a000000 ) {
+					// Above 10.0.0.0
 					if ( version < 0x0a020000 ) {
+						// Below 10.2.0.0
 						ofs += 4;
 					}
 				} else {
 					if ( version < 0x0303000d ) {
+						// Below 3.3.0.13
 						if ( rootLinks.contains( c - 1 ) ) {
 							QString string = "Top Level Object";
 							ofs += 4 + string.length();
@@ -2187,6 +2205,7 @@ int NifModel::fileOffset( const QModelIndex & index ) const
 					ofs += 4 + string.length();
 
 					if ( version < 0x0303000d ) {
+						// Below 3.3.0.13
 						ofs += 4;
 					}
 				}
