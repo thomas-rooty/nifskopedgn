@@ -374,8 +374,10 @@ private:
 	QAction * aRecentFilesSeparator;
 
 	QAction * recentFileActs[NumRecentFiles];
-	QAction * recentArchiveActs[NumRecentFiles];
-	QAction * recentArchiveFileActs[NumRecentFiles];
+
+	// REFACTOR: BSA
+	//QAction * recentArchiveActs[NumRecentFiles];
+	//QAction * recentArchiveFileActs[NumRecentFiles];
 
 	bool isResizing;
 	QTimer * resizeTimer;

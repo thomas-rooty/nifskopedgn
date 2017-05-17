@@ -663,12 +663,15 @@ NifItem * BaseModel::getItem( NifItem * item, const QString & name ) const
 	if ( !item || item == root )
 		return nullptr;
 
+	// This is done when an `arg` attribute is passed to a row in nif.xml
+	//	The Argument is stored as `..\Variable` where "Variable" is the name of the row
+	//	whose value has been passed into the array/compound for use in expressions
 	int slash = name.indexOf( "\\" );
-
 	if ( slash > 0 ) {
 		QString left  = name.left( slash );
 		QString right = name.right( name.length() - slash - 1 );
 
+		// Matches parent '..\' for cond/arr1/arr2 arg passing
 		if ( left == ".." )
 			return getItem( item->parent(), right );
 

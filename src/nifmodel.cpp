@@ -389,12 +389,15 @@ NifItem * NifModel::getItem( NifItem * item, const QString & name ) const
 		return nullptr;
 
 	if ( item->isArray() || item->parent()->isArray() ) {
+		// This is done when an `arg` attribute is passed to a row in nif.xml
+		//	The Argument is stored as `..\Variable` where "Variable" is the name of the row
+		//	whose value has been passed into the array/compound for use in expressions
 		int slash = name.indexOf( "\\" );
 		if ( slash > 0 ) {
 			QString left = name.left( slash );
 			QString right = name.right( name.length() - slash - 1 );
 
-			// Resolve ../ for arr1, arr2, arg passing
+			// Matches parent '..\' for cond/arr1/arr2 arg passing
 			if ( left == ".." )
 				return getItem( item->parent(), right );
 
@@ -414,8 +417,12 @@ NifItem * NifModel::getItem( NifItem * item, const QString & name ) const
  *  array functions
  */
 
+
 static QString parentPrefix( const QString & x )
 {
+	// This is done when an `arg` attribute is passed to a row in nif.xml
+	//	The Argument is stored as `..\Variable` where "Variable" is the name of the row
+	//	whose value has been passed into the array/compound for use in expressions
 	for ( int c = 0; c < x.length(); c++ ) {
 		if ( !x[c].isNumber() )
 			return QString( "..\\" ) + x;
@@ -2038,6 +2045,7 @@ bool NifModel::save( QIODevice & device ) const
 	return true;
 }
 
+// TODO: Unused
 bool NifModel::loadIndex( QIODevice & device, const QModelIndex & index )
 {
 	NifItem * item = static_cast<NifItem *>( index.internalPointer() );
@@ -2053,6 +2061,14 @@ bool NifModel::loadIndex( QIODevice & device, const QModelIndex & index )
 
 	reset();
 	return false;
+}
+
+// TODO: Unused
+bool NifModel::saveIndex( QIODevice & device, const QModelIndex & index ) const
+{
+	NifOStream stream( this, &device );
+	NifItem * item = static_cast<NifItem *>(index.internalPointer());
+	return (item && index.isValid() && index.model() == this && saveItem( item, stream ));
 }
 
 bool NifModel::loadAndMapLinks( QIODevice & device, const QModelIndex & index, const QMap<qint32, qint32> & map )
@@ -2133,13 +2149,6 @@ bool NifModel::earlyRejection( const QString & filepath, const QString & blockId
 	}
 
 	return (ver_match && blk_match);
-}
-
-bool NifModel::saveIndex( QIODevice & device, const QModelIndex & index ) const
-{
-	NifOStream stream( this, &device );
-	NifItem * item = static_cast<NifItem *>( index.internalPointer() );
-	return ( item && index.isValid() && index.model() == this && saveItem( item, stream ) );
 }
 
 int NifModel::fileOffset( const QModelIndex & index ) const
@@ -2975,6 +2984,7 @@ void NifModel::convertNiBlock( const QString & identifier, const QModelIndex & i
 	}
 }
 
+// TODO: Unused
 bool NifModel::holdUpdates( bool value )
 {
 	bool retval = lockUpdates;
@@ -2992,6 +3002,7 @@ bool NifModel::holdUpdates( bool value )
 	return retval;
 }
 
+// TODO: Unused
 void NifModel::updateModel( UpdateType value )
 {
 	if ( value & utHeader )

@@ -60,13 +60,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QAction>
 #include <QApplication>
 #include <QByteArray>
-#include <QCheckBox>
-#include <QComboBox>
 #include <QDebug>
 #include <QDockWidget>
 #include <QFileDialog>
 #include <QFontDialog>
-#include <QGroupBox>
 #include <QHeaderView>
 #include <QMenu>
 #include <QMenuBar>
@@ -77,7 +74,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QTimer>
 #include <QToolBar>
 #include <QToolButton>
-#include <QWidgetAction>
 
 #include <QProcess>
 #include <QStyleFactory>
@@ -177,15 +173,14 @@ void NifSkope::initActions()
 	// Setup blank QActions for Recent Files menus
 	for ( int i = 0; i < NumRecentFiles; ++i ) {
 		recentFileActs[i] = new QAction( this );
-		recentArchiveActs[i] = new QAction( this );
-		recentArchiveFileActs[i] = new QAction( this );
-
 		recentFileActs[i]->setVisible( false );
-		recentArchiveActs[i]->setVisible( false );
-		recentArchiveFileActs[i]->setVisible( false );
-
 		connect( recentFileActs[i], &QAction::triggered, this, &NifSkope::openRecentFile );
+
 		// REFACTOR: BSA
+		//recentArchiveActs[i] = new QAction( this );
+		//recentArchiveFileActs[i] = new QAction( this );
+		//recentArchiveActs[i]->setVisible( false );
+		//recentArchiveFileActs[i]->setVisible( false );
 		//connect( recentArchiveActs[i], &QAction::triggered, this, &NifSkope::openRecentArchive );
 		//connect( recentArchiveFileActs[i], &QAction::triggered, this, &NifSkope::openRecentArchiveFile );
 	}
@@ -413,14 +408,17 @@ void NifSkope::initMenu()
 	//connect( mExport, &QMenu::triggered, this, &NifSkope::sltImportExport );
 	//connect( mImport, &QMenu::triggered, this, &NifSkope::sltImportExport );
 
-	// BSA Recent Files
-	mRecentArchiveFiles = new QMenu( this );
-	mRecentArchiveFiles->setObjectName( "mRecentArchiveFiles" );
+	// REFACTOR: BSA
+	//// BSA Recent Files
+	//mRecentArchiveFiles = new QMenu( this );
+	//mRecentArchiveFiles->setObjectName( "mRecentArchiveFiles" );
 
 	for ( int i = 0; i < NumRecentFiles; ++i ) {
 		ui->mRecentFiles->addAction( recentFileActs[i] );
-		ui->mRecentArchives->addAction( recentArchiveActs[i] );
-		mRecentArchiveFiles->addAction( recentArchiveFileActs[i] );
+
+		// REFACTOR: BSA
+		//ui->mRecentArchives->addAction( recentArchiveActs[i] );
+		//mRecentArchiveFiles->addAction( recentArchiveFileActs[i] );
 	}
 
 	// Load & Save

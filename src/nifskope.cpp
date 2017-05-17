@@ -1089,29 +1089,6 @@ void IPCsocket::openNif( const QString & url )
 }
 
 
-// TODO: This class was not used. QSystemLocale became private in Qt 5.
-// It appears this class was going to handle display of numbers.
-//! System locale override
-/**
- * Qt does not use the System Locale consistency so this basically forces all floating
- * numbers into C format but leaves all other local specific settings.
- */
-/*class NifSystemLocale : QSystemLocale
-{
-    virtual QVariant query(QueryType type, QVariant in) const
-    {
-        switch (type)
-        {
-        case DecimalPoint:
-            return QVariant( QLocale::c().decimalPoint() );
-        case GroupSeparator:
-            return QVariant( QLocale::c().groupSeparator() );
-        default:
-            return QVariant();
-        }
-    }
-};*/
-
 static QTranslator * mTranslator = nullptr;
 
 //! Sets application locale and loads translation files
