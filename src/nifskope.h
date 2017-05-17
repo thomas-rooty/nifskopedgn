@@ -276,9 +276,6 @@ private:
 	//! Disconnect and reconnect the models to the views
 	void swapModels();
 
-	QMenu * lightingWidget();
-	QWidget * filePathWidget( QWidget * );
-
 	void setViewFont( const QFont & );
 
 	// REFACTOR
