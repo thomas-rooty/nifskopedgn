@@ -120,7 +120,5 @@ private:
 	NifValue value = NifValue();
 };
 
-// The global NifTreeView clipboard pointer
-static auto valueClipboard = std::make_unique<NifValueClipboard>();
 
 #endif

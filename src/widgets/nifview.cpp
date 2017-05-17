@@ -41,6 +41,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QClipboard>
 #include <QKeyEvent>
 
+
+// The global NifTreeView clipboard pointer
+static auto valueClipboard = std::make_unique<NifValueClipboard>();
+
+
 NifTreeView::NifTreeView( QWidget * parent, Qt::WindowFlags flags ) : QTreeView()
 {
 	Q_UNUSED( flags );
