@@ -132,7 +132,6 @@ include(NifSkope_targets.pri)
 ###############################
 
 HEADERS += \
-	src/config.h \
         src/basemodel.h \
         src/kfmmodel.h \
         src/message.h \
