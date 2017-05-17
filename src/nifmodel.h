@@ -45,10 +45,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 
-class SpellBook;
+class ActionMenu;
 
 using NifBlockPtr = std::shared_ptr<NifBlock>;
-using SpellBookPtr = std::shared_ptr<SpellBook>;
+using ActionMenuPtr = std::shared_ptr<ActionMenu>;
 
 //! @file nifmodel.h NifModel, NifModelEval, ChangeValueCommand, ToggleCheckBoxListCommand
 
@@ -274,8 +274,8 @@ public:
 	bool assignString( const QModelIndex & index, const QString & string, bool replace = false );
 	bool assignString( const QModelIndex & index, const QString & name, const QString & string, bool replace = false );
 
-	//! Create and return delegate for SpellBook
-	static QAbstractItemDelegate * createDelegate( QObject * parent, SpellBookPtr book );
+	//! Create and return delegate for ActionMenu
+	static QAbstractItemDelegate * createDelegate( QObject * parent, ActionMenuPtr actionsMenu );
 
 	//! Undo Stack for changes to NifModel
 	QUndoStack * undoStack;

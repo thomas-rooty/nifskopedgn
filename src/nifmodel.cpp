@@ -1489,10 +1489,9 @@ QVariant NifModel::data( const QModelIndex & idx, int role ) const
 	case Qt::UserRole:
 		{
 			if ( column == ValueCol ) {
-				SpellPtr spell = SpellBook::instant( this, index );
-
-				if ( spell )
-					return spell->page() + "/" + spell->name();
+				ActionPtr a = ActionMenu::instant( this, index );
+				if ( a )
+					return a->page() + "/" + a->name();
 			}
 		}
 		return QVariant();

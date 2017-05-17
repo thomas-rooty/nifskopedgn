@@ -401,8 +401,8 @@ void NifSkope::initMenu()
 		}
 	}
 
-	// Insert SpellBook class before Help
-	ui->menubar->insertMenu( ui->menubar->actions().at( 3 ), book.get() );
+	// Insert ActionMenu class before Help
+	ui->menubar->insertMenu( ui->menubar->actions().at( 3 ), actionsMenu.get() );
 
 	// Insert Import/Export menus
 	mExport = ui->menuExport;
@@ -1006,10 +1006,10 @@ void NifSkope::contextMenu( const QPoint & pos )
 		idx = qobject_cast<const NifProxyModel *>(idx.model())->mapTo( idx );
 	}
 
-	SpellBook contextBook( nif, idx, this, SLOT( select( const QModelIndex & ) ) );
+	ActionMenu contextMenu( nif, idx, this, SLOT( select( const QModelIndex & ) ) );
 
 	if ( !idx.isValid() || nif->flags( idx ) & Qt::ItemIsEditable )
-		contextBook.exec( p );
+		contextMenu.exec( p );
 }
 
 void NifSkope::overrideViewFont()

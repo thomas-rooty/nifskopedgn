@@ -187,7 +187,7 @@ NifSkope::NifSkope()
 	kfm = new KfmModel( this );
 	kfmEmpty = new KfmModel( this );
 
-	book = SpellBookPtr( new SpellBook( nif, QModelIndex(), this, SLOT( select( const QModelIndex & ) ) ) );
+	actionsMenu = ActionMenuPtr( new ActionMenu( nif, QModelIndex(), this, SLOT( select( const QModelIndex & ) ) ) );
 
 	// Setup Views
 	/* ********************** */
@@ -196,14 +196,14 @@ NifSkope::NifSkope()
 	list = ui->list;
 	list->setModel( proxy );
 	list->setSortingEnabled( false );
-	list->setItemDelegate( nif->createDelegate( this, book ) );
+	list->setItemDelegate( nif->createDelegate( this, actionsMenu ) );
 	list->installEventFilter( this );
 
 	// Block Details
 	tree = ui->tree;
 	tree->setModel( nif );
 	tree->setSortingEnabled( false );
-	tree->setItemDelegate( nif->createDelegate( this, book ) );
+	tree->setItemDelegate( nif->createDelegate( this, actionsMenu ) );
 	tree->installEventFilter( this );
 	tree->header()->moveSection( 1, 2 );
 	// Allow multi-row paste
@@ -214,7 +214,7 @@ NifSkope::NifSkope()
 	// Header Details
 	header = ui->header;
 	header->setModel( nif );
-	header->setItemDelegate( nif->createDelegate( this, book ) );
+	header->setItemDelegate( nif->createDelegate( this, actionsMenu ) );
 	header->installEventFilter( this );
 	header->header()->moveSection( 1, 2 );
 
@@ -936,7 +936,7 @@ void NifSkope::save()
 		emit completeSave( kfm->saveToFile( fname ), fname );
 	} else {
 		if ( aSanitize->isChecked() ) {
-			QModelIndex idx = SpellBook::sanitize( nif );
+			QModelIndex idx = ActionMenu::sanitize( nif );
 			if ( idx.isValid() )
 				select( idx );
 		}

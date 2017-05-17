@@ -9,7 +9,7 @@ Q_LOGGING_CATEGORY( ns, "nifskope" )
 Q_LOGGING_CATEGORY( nsGl, "nifskope.gl" )
 Q_LOGGING_CATEGORY( nsIo, "nifskope.io" )
 Q_LOGGING_CATEGORY( nsNif, "nifskope.nif" )
-Q_LOGGING_CATEGORY( nsSpell, "nifskope.spell" )
+Q_LOGGING_CATEGORY( nsAction, "nifskope.action" )
 
 
 Message::Message() : QObject( nullptr )

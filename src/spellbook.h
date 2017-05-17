@@ -30,8 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ***** END LICENCE BLOCK *****/
 
-#ifndef SPELLBOOK_H
-#define SPELLBOOK_H
+#ifndef ACTIONMENU_H
+#define ACTIONMENU_H
 
 #include "message.h"
 #include "nifmodel.h"
@@ -51,44 +51,44 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using QIconPtr = std::shared_ptr<QIcon>;
 
-//! \file spellbook.h Spell, SpellBook and Librarian
+//! \file actionmenu.h Action, ActionMenu and ActionFactory
 
-//! Register a Spell using a Librarian
-#define REGISTER_SPELL( SPELL ) static Librarian __ ## SPELL ## __( new SPELL );
+//! Register an Action using an ActionFactory
+#define REGISTER_ACTION( ACTION ) static ActionFactory __ ## ACTION ## __( new ACTION );
 
 //! Flexible context menu magic functions.
-class Spell
+class Action
 {
 public:
 	//! Constructor
-	Spell() {}
+	Action() {}
 	//! Destructor
-	virtual ~Spell() {}
+	virtual ~Action() {}
 
-	//! Name of spell
+	//! Name of action
 	virtual QString name() const = 0;
-	//! Context sub-menu that the spell appears on
+	//! Context sub-menu that the action appears on
 	virtual QString page() const { return QString(); }
 	//! Unused?
 	virtual QString hint() const { return QString(); }
 	//! Icon displayed in block view
 	virtual QIcon icon() const { return QIcon(); }
-	//! Whether the spell shows up in block list instead of a context menu
+	//! Whether the action shows up in block list instead of a context menu
 	virtual bool instant() const { return false; }
-	//! Whether the spell performs a sanitizing function
+	//! Whether the action performs a sanitizing function
 	virtual bool sanity() const { return false; }
-	//! Whether the spell has a high processing cost
+	//! Whether the action has a high processing cost
 	virtual bool batch() const { return (page() == "Batch") || (page() == "Block") || (page() == "Mesh"); }
 	//! Hotkey sequence
 	virtual QKeySequence hotkey() const { return QKeySequence(); }
 
-	//! Determine if/when the spell can be cast
+	//! Determine if/when the action can be cast
 	virtual bool isApplicable( const NifModel * nif, const QModelIndex & index ) = 0;
 
-	//! Cast (apply) the spell
+	//! Cast (apply) the action
 	virtual QModelIndex cast( NifModel * nif, const QModelIndex & index ) = 0;
 
-	//! Cast the spell if applicable
+	//! Cast the action if applicable
 	void castIfApplicable( NifModel * nif, const QModelIndex & index )
 	{
 		if ( isApplicable( nif, index ) )
@@ -101,38 +101,38 @@ public:
 	 * context. We also don't use the QCoreApplication Q_DECLARE_TR_FUNCTIONS()
 	 * macro because that won't document properly.
 	 *
-	 * No spells should reimplement this function.
+	 * No actions should reimplement this function.
 	 */
-	static inline QString tr( const char * key, const char * comment = 0 ) { return QCoreApplication::translate( "Spell", key, comment ); }
+	static inline QString tr( const char * key, const char * comment = 0 ) { return QCoreApplication::translate( "Action", key, comment ); }
 };
 
-using SpellPtr = std::shared_ptr<Spell>;
+using ActionPtr = std::shared_ptr<Action>;
 
-//! Spell menu
-class SpellBook final : public QMenu
+//! Action menu
+class ActionMenu final : public QMenu
 {
 	Q_OBJECT
 
 public:
 	//! Constructor
-	SpellBook( NifModel * nif, const QModelIndex & index = QModelIndex(), QObject * receiver = 0, const char * member = 0 );
+	ActionMenu( NifModel * nif, const QModelIndex & index = QModelIndex(), QObject * receiver = 0, const char * member = 0 );
 	//! Destructor
-	~SpellBook();
+	~ActionMenu();
 
 	//! From QMenu: Pops up the menu so that the action <i>act</i> will be at the specified global position <i>pos</i>
 	QAction * exec( const QPoint & pos, QAction * act = 0 );
 
-	//! Register spell with appropriate books
-	static void registerSpell( SpellPtr spell );
+	//! Register action with appropriate actions menu
+	static void registerAction( ActionPtr action );
 
-	//! Locate spell by name
-	static SpellPtr lookup( const QString & id );
-	//! Locate spell by hotkey
-	static SpellPtr lookup( const QKeySequence & hotkey );
-	//! Locate instant spells by datatype
-	static SpellPtr instant( const NifModel * nif, const QModelIndex & index );
+	//! Locate action by name
+	static ActionPtr lookup( const QString & id );
+	//! Locate action by hotkey
+	static ActionPtr lookup( const QKeySequence & hotkey );
+	//! Locate instant actions by datatype
+	static ActionPtr instant( const NifModel * nif, const QModelIndex & index );
 
-	//! Cast all sanitizing spells
+	//! Cast all sanitizing actions
 	static QModelIndex sanitize( NifModel * nif );
 
 public slots:
@@ -140,7 +140,7 @@ public slots:
 
 	void sltIndex( const QModelIndex & index );
 
-	void cast( NifModel * nif, const QModelIndex & index, SpellPtr spell );
+	void cast( NifModel * nif, const QModelIndex & index, ActionPtr a );
 
 	void checkActions();
 
@@ -148,37 +148,37 @@ signals:
 	void sigIndex( const QModelIndex & index );
 
 protected slots:
-	void sltSpellTriggered( QAction * action );
+	void sltActionTriggered( QAction * action );
 
 protected:
 	NifModel * Nif;
 	QPersistentModelIndex Index;
-	QMap<QAction *, SpellPtr> Map;
+	QMap<QAction *, ActionPtr> Map;
 
-	void newSpellRegistered( SpellPtr spell );
+	void newActionRegistered( ActionPtr a );
 	void checkActions( QMenu * menu, const QString & page );
 
 private:
-	static QList<SpellPtr> & spells();
-	static QList<SpellBook *> & books();
-	static QMultiHash<QString, SpellPtr> & hash();
-	static QList<SpellPtr> & instants();
-	static QList<SpellPtr> & sanitizers();
+	static QList<ActionPtr> & allactions();
+	static QList<ActionMenu *> & actionmenus();
+	static QMultiHash<QString, ActionPtr> & hash();
+	static QList<ActionPtr> & instants();
+	static QList<ActionPtr> & sanitizers();
 };
 
-//! SpellBook manager
-class Librarian final
+//! ActionMenu manager
+class ActionFactory final
 {
 public:
 	//! Contructor.
 	/**
-	 * Registers the spell with the appropriate spellbooks.
+	 * Registers the action with the appropriate action menu.
 	 *
-	 * \param spell The spell to manage
+	 * \param action The action to manage
 	 */
-	Librarian( Spell * spell )
+	ActionFactory( Action * action )
 	{
-		SpellBook::registerSpell( SpellPtr( spell ) );
+		ActionMenu::registerAction( ActionPtr( action ) );
 	}
 };
 

@@ -305,15 +305,14 @@ void NifTreeView::keyPressEvent( QKeyEvent * e )
 		}
 	}
 
-	SpellPtr spell = SpellBook::lookup( QKeySequence( e->modifiers() + e->key() ) );
-
-	if ( spell ) {
+	ActionPtr a = ActionMenu::lookup( QKeySequence( e->modifiers() + e->key() ) );
+	if ( a ) {
 		NifModel * nif = nullptr;
 		NifProxyModel * proxy = nullptr;
 
 		QPersistentModelIndex oldidx;
 
-		// Clear this on any spell cast to prevent it overriding other paste behavior like block -> link row
+		// Clear this on any action cast to prevent it overriding other paste behavior like block -> link row
 		// TODO: Value clipboard does not get cleared when using the context menu. 
 		valueClipboard->getValue().clear();
 
@@ -326,14 +325,14 @@ void NifTreeView::keyPressEvent( QKeyEvent * e )
 			oldidx = proxy->mapTo( currentIndex() );
 		}
 
-		if ( nif && spell->isApplicable( nif, oldidx ) ) {
+		if ( nif && a->isApplicable( nif, oldidx ) ) {
 			selectionModel()->setCurrentIndex( QModelIndex(), QItemSelectionModel::Clear | QItemSelectionModel::Rows );
 
-			bool noSignals = spell->batch();
+			bool noSignals = a->batch();
 			if ( noSignals )
 				nif->setState( BaseModel::Processing );
-			// Cast the spell and return index
-			QModelIndex newidx = spell->cast( nif, oldidx );
+			// Cast the action and return index
+			QModelIndex newidx = a->cast( nif, oldidx );
 			if ( noSignals )
 				nif->resetState();
 

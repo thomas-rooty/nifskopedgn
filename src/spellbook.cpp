@@ -40,68 +40,68 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-//! \file spellbook.cpp SpellBook implementation
+//! \file actionmenu.cpp ActionMenu implementation
 
-QList<SpellPtr> & SpellBook::spells()
+QList<ActionPtr> & ActionMenu::allactions()
 {
-	static QList<SpellPtr> _spells = QList<SpellPtr>();
-	return _spells;
+	static QList<ActionPtr> _actions = QList<ActionPtr>();
+	return _actions;
 }
 
-QList<SpellBook *> & SpellBook::books()
+QList<ActionMenu *> & ActionMenu::actionmenus()
 {
-	static QList<SpellBook *> _books = QList<SpellBook *>();
-	return _books;
+	static QList<ActionMenu *> _menus = QList<ActionMenu *>();
+	return _menus;
 }
 
-QMultiHash<QString, SpellPtr> & SpellBook::hash()
+QMultiHash<QString, ActionPtr> & ActionMenu::hash()
 {
-	static QMultiHash<QString, SpellPtr> _hash = QMultiHash<QString, SpellPtr>();
+	static QMultiHash<QString, ActionPtr> _hash = QMultiHash<QString, ActionPtr>();
 	return _hash;
 }
 
-QList<SpellPtr> & SpellBook::instants()
+QList<ActionPtr> & ActionMenu::instants()
 {
-	static QList<SpellPtr> _instants = QList<SpellPtr>();
+	static QList<ActionPtr> _instants = QList<ActionPtr>();
 	return _instants;
 }
 
-QList<SpellPtr> & SpellBook::sanitizers()
+QList<ActionPtr> & ActionMenu::sanitizers()
 {
-	static QList<SpellPtr> _sanitizers = QList<SpellPtr>();
+	static QList<ActionPtr> _sanitizers = QList<ActionPtr>();
 	return _sanitizers;
 }
 
-SpellBook::SpellBook( NifModel * nif, const QModelIndex & index, QObject * receiver, const char * member ) : QMenu(), Nif( 0 )
+ActionMenu::ActionMenu( NifModel * nif, const QModelIndex & index, QObject * receiver, const char * member ) : QMenu(), Nif( 0 )
 {
-	setTitle( "Spells" );
+	setTitle( "Actions" );
 
-	// register this book in the library
-	books().append( this );
+	// register this menu in the library
+	actionmenus().append( this );
 
-	// attach this book to the specified nif
+	// attach this menu to the specified nif
 	sltNif( nif );
 
-	// fill in the known spells
-	for ( SpellPtr spell : spells() ) {
-		newSpellRegistered( spell );
+	// fill in the known actions
+	for ( ActionPtr a : allactions() ) {
+		newActionRegistered( a );
 	}
 
 	// set the current index
 	sltIndex( index );
 
-	connect( this, &SpellBook::triggered, this, &SpellBook::sltSpellTriggered );
+	connect( this, &ActionMenu::triggered, this, &ActionMenu::sltActionTriggered );
 
 	if ( receiver && member )
 		connect( this, SIGNAL( sigIndex( const QModelIndex & ) ), receiver, member );
 }
 
-SpellBook::~SpellBook()
+ActionMenu::~ActionMenu()
 {
-	books().removeAll( this );
+	actionmenus().removeAll( this );
 }
 
-void SpellBook::cast( NifModel * nif, const QModelIndex & index, SpellPtr spell )
+void ActionMenu::cast( NifModel * nif, const QModelIndex & index, ActionPtr a )
 {
 	QSettings cfg;
 
@@ -117,12 +117,12 @@ void SpellBook::cast( NifModel * nif, const QModelIndex & index, SpellPtr spell 
 			cfg.setValue( "Settings/Suppress Undoable Confirmation", true );
 	}
 	
-	if ( (response == QDialogButtonBox::Yes) && spell && spell->isApplicable( nif, index ) ) {
-		bool noSignals = spell->batch();
+	if ( (response == QDialogButtonBox::Yes) && a && a->isApplicable( nif, index ) ) {
+		bool noSignals = a->batch();
 		if ( noSignals )
 			nif->setState( BaseModel::Processing );
-		// Cast the spell and return index
-		auto idx = spell->cast( nif, index );
+		// Cast the action and return index
+		auto idx = a->cast( nif, index );
 		if ( noSignals )
 			nif->resetState();
 
@@ -138,25 +138,25 @@ void SpellBook::cast( NifModel * nif, const QModelIndex & index, SpellPtr spell 
 	}
 }
 
-void SpellBook::sltSpellTriggered( QAction * action )
+void ActionMenu::sltActionTriggered( QAction * action )
 {
-	SpellPtr spell = Map.value( action );
-	cast( Nif, Index, spell );
+	ActionPtr a = Map.value( action );
+	cast( Nif, Index, a );
 }
 
-void SpellBook::sltNif( NifModel * nif )
+void ActionMenu::sltNif( NifModel * nif )
 {
 	if ( Nif )
-		disconnect( Nif, &NifModel::modelReset, this, static_cast<void (SpellBook::*)()>(&SpellBook::checkActions) );
+		disconnect( Nif, &NifModel::modelReset, this, static_cast<void (ActionMenu::*)()>(&ActionMenu::checkActions) );
 
 	Nif = nif;
 	Index = QModelIndex();
 
 	if ( Nif )
-		connect( Nif, &NifModel::modelReset, this, static_cast<void (SpellBook::*)()>(&SpellBook::checkActions) );
+		connect( Nif, &NifModel::modelReset, this, static_cast<void (ActionMenu::*)()>(&ActionMenu::checkActions) );
 }
 
-void SpellBook::sltIndex( const QModelIndex & index )
+void ActionMenu::sltIndex( const QModelIndex & index )
 {
 	if ( index.model() == Nif )
 		Index = index;
@@ -166,12 +166,12 @@ void SpellBook::sltIndex( const QModelIndex & index )
 	checkActions();
 }
 
-void SpellBook::checkActions()
+void ActionMenu::checkActions()
 {
 	checkActions( this, QString() );
 }
 
-void SpellBook::checkActions( QMenu * menu, const QString & page )
+void ActionMenu::checkActions( QMenu * menu, const QString & page )
 {
 	bool menuEnable = false;
 	for ( QAction * action : menu->actions() ) {
@@ -180,9 +180,9 @@ void SpellBook::checkActions( QMenu * menu, const QString & page )
 			menuEnable |= action->menu()->isEnabled();
 			action->setVisible( action->menu()->isEnabled() );
 		} else {
-			for ( SpellPtr spell : spells() ) {
-				if ( action->text() == spell->name() && page == spell->page() ) {
-					bool actionEnable = Nif && spell->isApplicable( Nif, Index );
+			for ( ActionPtr a : allactions() ) {
+				if ( action->text() == a->name() && page == a->page() ) {
+					bool actionEnable = Nif && a->isApplicable( Nif, Index );
 					action->setVisible( actionEnable );
 					action->setEnabled( actionEnable );
 					menuEnable |= actionEnable;
@@ -193,47 +193,47 @@ void SpellBook::checkActions( QMenu * menu, const QString & page )
 	menu->setEnabled( menuEnable );
 }
 
-void SpellBook::newSpellRegistered( SpellPtr spell )
+void ActionMenu::newActionRegistered( ActionPtr a )
 {
-	if ( spell->page().isEmpty() ) {
-		Map.insert( addAction( spell->icon(), spell->name() ), spell );
+	if ( a->page().isEmpty() ) {
+		Map.insert( addAction( a->icon(), a->name() ), a );
 	} else {
 		QMenu * menu = nullptr;
 		for ( QAction * action : actions() ) {
-			if ( action->menu() && action->menu()->title() == spell->page() ) {
+			if ( action->menu() && action->menu()->title() == a->page() ) {
 				menu = action->menu();
 				break;
 			}
 		}
 
 		if ( !menu ) {
-			menu = new QMenu( spell->page(), this );
+			menu = new QMenu( a->page(), this );
 			addMenu( menu );
 		}
 
-		QAction * act = menu->addAction( spell->icon(), spell->name() );
-		act->setShortcut( spell->hotkey() );
-		Map.insert( act, spell );
+		QAction * act = menu->addAction( a->icon(), a->name() );
+		act->setShortcut( a->hotkey() );
+		Map.insert( act, a );
 	}
 }
 
-void SpellBook::registerSpell( SpellPtr spell )
+void ActionMenu::registerAction( ActionPtr a )
 {
-	spells().append( spell );
-	hash().insertMulti( spell->name(), spell );
+	allactions().append( a );
+	hash().insertMulti( a->name(), a );
 
-	if ( spell->instant() )
-		instants().append( spell );
+	if ( a->instant() )
+		instants().append( a );
 
-	if ( spell->sanity() )
-		sanitizers().append( spell );
+	if ( a->sanity() )
+		sanitizers().append( a );
 
-	for ( SpellBook * book : books() ) {
-		book->newSpellRegistered( spell );
+	for ( ActionMenu * m : actionmenus() ) {
+		m->newActionRegistered( a );
 	}
 }
 
-SpellPtr SpellBook::lookup( const QString & id )
+ActionPtr ActionMenu::lookup( const QString & id )
 {
 	if ( id.isEmpty() )
 		return nullptr;
@@ -247,43 +247,43 @@ SpellPtr SpellBook::lookup( const QString & id )
 		name = split.value( 1 );
 	}
 
-	for ( SpellPtr spell : hash().values( name ) ) {
-		if ( spell->page() == page )
-			return spell;
+	for ( ActionPtr a : hash().values( name ) ) {
+		if ( a->page() == page )
+			return a;
 	}
 
 	return nullptr;
 }
 
-SpellPtr SpellBook::lookup( const QKeySequence & hotkey )
+ActionPtr ActionMenu::lookup( const QKeySequence & hotkey )
 {
 	if ( hotkey.isEmpty() )
 		return nullptr;
 
-	for ( SpellPtr spell : spells() ) {
-		if ( spell->hotkey() == hotkey )
-			return spell;
+	for ( ActionPtr a : allactions() ) {
+		if ( a->hotkey() == hotkey )
+			return a;
 	}
 
 	return nullptr;
 }
 
-SpellPtr SpellBook::instant( const NifModel * nif, const QModelIndex & index )
+ActionPtr ActionMenu::instant( const NifModel * nif, const QModelIndex & index )
 {
-	for ( SpellPtr spell : instants() ) {
-		if ( spell->isApplicable( nif, index ) )
-			return spell;
+	for ( ActionPtr a : instants() ) {
+		if ( a->isApplicable( nif, index ) )
+			return a;
 	}
 	return nullptr;
 }
 
-QModelIndex SpellBook::sanitize( NifModel * nif )
+QModelIndex ActionMenu::sanitize( NifModel * nif )
 {
 	QPersistentModelIndex ridx;
 
-	for ( SpellPtr spell : sanitizers() ) {
-		if ( spell->isApplicable( nif, QModelIndex() ) ) {
-			QModelIndex idx = spell->cast( nif, QModelIndex() );
+	for ( ActionPtr a : sanitizers() ) {
+		if ( a->isApplicable( nif, QModelIndex() ) ) {
+			QModelIndex idx = a->cast( nif, QModelIndex() );
 
 			if ( idx.isValid() && !ridx.isValid() )
 				ridx = idx;
@@ -293,7 +293,7 @@ QModelIndex SpellBook::sanitize( NifModel * nif )
 	return ridx;
 }
 
-QAction * SpellBook::exec( const QPoint & pos, QAction * act )
+QAction * ActionMenu::exec( const QPoint & pos, QAction * act )
 {
 	if ( isEnabled() )
 		return QMenu::exec( pos, act );

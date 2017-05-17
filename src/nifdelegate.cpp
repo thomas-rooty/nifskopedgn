@@ -59,10 +59,10 @@ extern void qt_format_text( const QFont & font, const QRectF & _r,
 
 class NifDelegate final : public QItemDelegate
 {
-	SpellBookPtr book;
+	ActionMenuPtr actionsMenu;
 
 public:
-	NifDelegate( QObject * p, SpellBookPtr sb = 0 ) : QItemDelegate( p ), book( sb )
+	NifDelegate( QObject * p, ActionMenuPtr sb = 0 ) : QItemDelegate( p ), actionsMenu( sb )
 	{
 	}
 
@@ -83,10 +83,10 @@ public:
 			if ( static_cast<QMouseEvent *>(event)->button() == Qt::LeftButton
 			     && decoRect( option ).contains( static_cast<QMouseEvent *>(event)->pos() ) )
 			{
-				// Spell Icons in Value column
-				SpellPtr spell = SpellBook::lookup( model->data( index, Qt::UserRole ).toString() );
-				if ( spell && !spell->icon().isNull() ) {
-					// Spell Icon click
+				// Action Icons in Value column
+				ActionPtr a = ActionMenu::lookup( model->data( index, Qt::UserRole ).toString() );
+				if ( a && !a->icon().isNull() ) {
+					// Action Icon click
 					if ( event->type() == QEvent::MouseButtonRelease ) {
 						NifModel * nif = 0;
 						QModelIndex buddy = index;
@@ -99,12 +99,12 @@ public:
 							buddy = proxy->mapTo( index );
 						}
 
-						// Cast Spell for icon which was clicked
-						if ( nif && spell->isApplicable( nif, buddy ) ) {
-							if ( book )
-								book->cast( nif, buddy, spell );
+						// Cast Action for icon which was clicked
+						if ( nif && a->isApplicable( nif, buddy ) ) {
+							if ( actionsMenu )
+								actionsMenu->cast( nif, buddy, a );
 							else
-								spell->cast( nif, buddy );
+								a->cast( nif, buddy );
 						}
 					}
 
@@ -149,10 +149,10 @@ public:
 		QIcon icon;
 
 		if ( !user.isEmpty() ) {
-			// Find the icon for this Spell if one exists
-			SpellPtr spell = SpellBook::lookup( user );
-			if ( spell )
-				icon = spell->icon();
+			// Find the icon for this Action if one exists
+			ActionPtr a = ActionMenu::lookup( user );
+			if ( a )
+				icon = a->icon();
 		}
 
 		QStyleOptionViewItem opt = option;
@@ -352,9 +352,9 @@ public:
 	}
 };
 
-QAbstractItemDelegate * NifModel::createDelegate( QObject * parent, SpellBookPtr book )
+QAbstractItemDelegate * NifModel::createDelegate( QObject * parent, ActionMenuPtr actionsMenu )
 {
-	return new NifDelegate( parent, book );
+	return new NifDelegate( parent, actionsMenu );
 }
 
 QAbstractItemDelegate * KfmModel::createDelegate( QObject * p )

@@ -1,5 +1,5 @@
-#ifndef SPELL_DEBUG_H
-#define SPELL_DEBUG_H
+#ifndef XML_DEBUG_H
+#define XML_DEBUG_H
 
 #include "message.h"
 

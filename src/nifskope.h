@@ -66,7 +66,7 @@ class NifProxyModel;
 class NifTreeView;
 class ReferenceBrowser;
 class SettingsDialog;
-class SpellBook;
+class ActionMenu;
 class QStandardItemModel;
 
 class QAction;
@@ -311,8 +311,8 @@ private:
 	//! This view shows the KFM file, if any.
 	NifTreeView * kfmtree;
 
-	//! Spellbook instance
-	std::shared_ptr<SpellBook> book;
+	//! Action menu instance
+	std::shared_ptr<ActionMenu> actionsMenu;
 
 	// REFACTOR: BSA
 	//std::shared_ptr<FSArchiveHandler> archiveHandler;
