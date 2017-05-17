@@ -1112,29 +1112,33 @@ bool NifModel::setItemValue( NifItem * item, const NifValue & val )
 
 QVariant NifModel::data( const QModelIndex & idx, int role ) const
 {
-	QModelIndex index = buddy( idx );
+	QModelIndex index = idx;
+
+	// TODO: Unused
+	//	`QAbstractItemModel::buddy` can be used to edit another index's data
+	//	e.g. editing "Name" through Block List.
+	//	This is instead done manually in `NifModel::setData`
+	//if ( index.column() == ValueCol )
+	//	index = buddy( idx );
 
 	NifItem * item = static_cast<NifItem *>( index.internalPointer() );
-
 	if ( !( index.isValid() && item && index.model() == this ) )
 		return QVariant();
 
-	int column = index.column();
-
-	bool ndr = role == NifSkopeDisplayRole;
-
-	if ( role == NifSkopeDisplayRole )
+	bool ndr = (role == NifSkopeDisplayRole);
+	if ( ndr )
 		role = Qt::DisplayRole;
 
+	// TODO: Refactor entire "buddy" system
+	int column = index.column();
 	if ( column == ValueCol && item->parent() == root && item->type() == "NiBlock" ) {
+		// Displays data from the block in the "Value" column in Block List
 		QModelIndex buddy;
 
 		if ( item->name() == "NiSourceTexture" || item->name() == "NiImage" ) {
 			buddy = getIndex( index, "File Name" );
 		} else if ( item->name() == "NiStringExtraData" ) {
 			buddy = getIndex( index, "String Data" );
-		//else if ( item->name() == "NiTransformInterpolator" && role == Qt::DisplayRole)
-		//	return QString(tr("TODO: find out who is referring me"));
 		} else {
 			buddy = getIndex( index, "Name" );
 		}
@@ -1145,6 +1149,8 @@ QVariant NifModel::data( const QModelIndex & idx, int role ) const
 		if ( buddy.isValid() )
 			return data( buddy, role );
 	} else if ( column == ValueCol && item->parent() != root && item->type() == "ControllerLink" && role == Qt::DisplayRole ) {
+		// For arrays/compounds, pull child data into the Value column
+		//	Though only specifically for "ControllerLink" types right now (bad design)
 		QModelIndex buddy;
 
 		if ( item->name() == "Controlled Blocks" ) {
@@ -1174,11 +1180,12 @@ QVariant NifModel::data( const QModelIndex & idx, int role ) const
 			switch ( column ) {
 			case NameCol:
 				{
+					// Return only the underlying item name with no additions
 					if ( ndr )
 						return item->name();
 
-					QString a = "";
-
+					// Return `N BlockName` where N == block number (for Block List)
+					QString a;
 					if ( itemType( index ) == "NiBlock" )
 						a = QString::number( getBlockNumber( index ) ) + " ";
 
@@ -1187,6 +1194,7 @@ QVariant NifModel::data( const QModelIndex & idx, int role ) const
 				break;
 			case TypeCol:
 				{
+					// Display `Ref<BlockType>` in Type column
 					if ( !item->temp().isEmpty() ) {
 						NifItem * i = item;
 
@@ -1510,11 +1518,11 @@ QVariant NifModel::data( const QModelIndex & idx, int role ) const
 bool NifModel::setData( const QModelIndex & index, const QVariant & value, int role )
 {
 	NifItem * item = static_cast<NifItem *>( index.internalPointer() );
-
 	if ( !( index.isValid() && role == Qt::EditRole && index.model() == this && item ) )
 		return false;
 
 	// buddy lookup
+	// TODO: Refactor entire "buddy" system
 	if ( index.column() == ValueCol && item->parent() == root && item->type() == "NiBlock" ) {
 		QModelIndex buddy;
 
@@ -1536,6 +1544,7 @@ bool NifModel::setData( const QModelIndex & index, const QVariant & value, int r
 	case NifModel::NameCol:
 		item->setName( value.toString() );
 
+		// Update the header if this item is a block
 		if ( item->parent() && item->parent() == root )
 			updateHeader();
 
@@ -1587,6 +1596,7 @@ bool NifModel::setData( const QModelIndex & index, const QVariant & value, int r
 	}
 
 	// reverse buddy lookup
+	// TODO: Refactor entire "buddy" system
 	if ( index.column() == ValueCol ) {
 		if ( item->name() == "File Name" ) {
 			NifItem * parent = item->parent();
