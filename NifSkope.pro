@@ -158,7 +158,8 @@ HEADERS += \
         src/ui/about_dialog.h \
         src/ui/checkablemessagebox.h \
         src/ui/settingsdialog.h \
-        src/version.h
+        src/version.h \
+        src/undocommands.h
 
 SOURCES += \
         src/actionmenu.cpp \
@@ -190,7 +191,8 @@ SOURCES += \
         src/ui/about_dialog.cpp \
         src/ui/checkablemessagebox.cpp \
         src/ui/settingsdialog.cpp \
-        src/version.cpp
+        src/version.cpp \
+        src/undocommands.cpp
 
 RESOURCES += \
         res/nifskope.qrc

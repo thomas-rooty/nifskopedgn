@@ -417,9 +417,8 @@ NifItem * NifModel::getItem( NifItem * item, const QString & name ) const
 }
 
 /*
- *  array functions
+ *  Array Functions
  */
-
 
 static QString parentPrefix( const QString & x )
 {
@@ -600,7 +599,7 @@ bool NifModel::updateArrays( NifItem * parent )
 }
 
 /*
- *  block functions
+ *  Block Functions
  */
 
 QModelIndex NifModel::insertNiBlock( const QString & identifier, int at )
@@ -706,23 +705,6 @@ void NifModel::moveNiBlock( int src, int dst )
 	emit linksChanged();
 }
 
-void NifModel::updateStrings( NifModel * src, NifModel * tgt, NifItem * item )
-{
-	if ( !item )
-		return;
-
-	NifValue::Type vt = item->value().type();
-
-	if ( vt == NifValue::tStringIndex || vt == NifValue::tSizedString || item->type() == "string" ) {
-		QString str = src->string( src->createIndex( 0, 0, item ) );
-		tgt->assignString( tgt->createIndex( 0, 0, item ), str, false );
-	}
-
-	for ( auto child : item->children() ) {
-		updateStrings( src, tgt, child );
-	}
-}
-
 QMap<qint32, qint32> NifModel::moveAllNiBlocks( NifModel * targetnif, bool update )
 {
 	int bcnt = getBlockCount();
@@ -820,16 +802,6 @@ void NifModel::reorderBlocks( const QVector<qint32> & order )
 	endInsertRows();
 
 	mapLinks( root, linkMap );
-	updateLinks();
-	emit linksChanged();
-
-	updateHeader();
-	updateFooter();
-}
-
-void NifModel::mapLinks( const QMap<qint32, qint32> & map )
-{
-	mapLinks( root, map );
 	updateLinks();
 	emit linksChanged();
 
@@ -964,7 +936,7 @@ int NifModel::getBlockCount() const
 
 
 /*
- *  ancestor functions
+ *  Ancestor Functions
  */
 
 void NifModel::insertAncestor( NifItem * parent, const QString & identifier, int at )
@@ -1082,6 +1054,13 @@ void NifModel::insertType( NifItem * parent, const NifData & data, int at )
 	}
 
 	restoreState();
+}
+
+NifItem * NifModel::insertBranch( NifItem * parentItem, const NifData & data, int at )
+{
+	NifItem * item = parentItem->insertChild( data, at );
+	item->value().changeType( NifValue::tNone );
+	return item;
 }
 
 
@@ -2070,11 +2049,13 @@ bool NifModel::save( QIODevice & device ) const
 	return true;
 }
 
-// TODO: Unused
+/*
+ *  Load Index/Item
+ */
+
 bool NifModel::loadIndex( QIODevice & device, const QModelIndex & index )
 {
 	NifItem * item = static_cast<NifItem *>( index.internalPointer() );
-
 	if ( item && index.isValid() && index.model() == this ) {
 		NifIStream stream( this, &device );
 		bool ok = loadItem( item, stream );
@@ -2088,18 +2069,10 @@ bool NifModel::loadIndex( QIODevice & device, const QModelIndex & index )
 	return false;
 }
 
-// TODO: Unused
-bool NifModel::saveIndex( QIODevice & device, const QModelIndex & index ) const
-{
-	NifOStream stream( this, &device );
-	NifItem * item = static_cast<NifItem *>(index.internalPointer());
-	return (item && index.isValid() && index.model() == this && saveItem( item, stream ));
-}
-
+// TODO: This is just a slight modification of the above function, optional third parameter instead?
 bool NifModel::loadAndMapLinks( QIODevice & device, const QModelIndex & index, const QMap<qint32, qint32> & map )
 {
-	NifItem * item = static_cast<NifItem *>( index.internalPointer() );
-
+	NifItem * item = static_cast<NifItem *>(index.internalPointer());
 	if ( item && index.isValid() && index.model() == this ) {
 		NifIStream stream( this, &device );
 		bool ok = loadItem( item, stream );
@@ -2112,6 +2085,103 @@ bool NifModel::loadAndMapLinks( QIODevice & device, const QModelIndex & index, c
 
 	reset();
 	return false;
+}
+
+bool NifModel::loadItem( NifItem * parent, NifIStream & stream )
+{
+	if ( !parent )
+		return false;
+
+	for ( auto child : parent->children() ) {
+		if ( !child->isConditionless() )
+			child->invalidateCondition();
+
+		if ( child->isAbstract() ) {
+			//qDebug() << "Not loading abstract item " << child->name();
+			continue;
+		}
+
+		if ( evalCondition( child ) ) {
+			if ( isArray( child ) ) {
+				if ( !updateArrayItem( child ) || !loadItem( child, stream ) )
+					return false;
+			} else if ( child->childCount() > 0 ) {
+				if ( !loadItem( child, stream ) )
+					return false;
+			} else {
+				if ( !stream.read( child->value() ) )
+					return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+/*
+ *  Save Index/Item
+ */
+
+bool NifModel::saveIndex( QIODevice & device, const QModelIndex & index ) const
+{
+	NifOStream stream( this, &device );
+	NifItem * item = static_cast<NifItem *>(index.internalPointer());
+	return (item && index.isValid() && index.model() == this && saveItem( item, stream ));
+}
+
+
+bool NifModel::saveItem( NifItem * parent, NifOStream & stream ) const
+{
+	if ( !parent )
+		return false;
+
+	for ( auto child : parent->children() ) {
+		if ( child->isAbstract() ) {
+			qDebug() << "Not saving abstract item " << child->name();
+			continue;
+		}
+
+		if ( evalCondition( child ) ) {
+			if ( isArray( child ) || !child->arr2().isEmpty() || child->childCount() > 0 ) {
+				if ( isArray( child ) && child->childCount() != getArraySize( child ) ) {
+					if ( child->isBinary() ) {
+						// special byte
+					} else {
+						Message::append( tr( "Warnings were generated while reading the blocks." ),
+										 tr( "block %1 %2 array size mismatch" ).arg( getBlockNumber( parent ) ).arg( child->name() )
+						);
+					}
+				}
+
+				if ( !saveItem( child, stream ) )
+					return false;
+			} else {
+				if ( !stream.write( child->value() ) )
+					return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+/*
+ *  Header Load
+ */
+
+bool NifModel::loadHeader( NifItem * header, NifIStream & stream )
+{
+	// Load header separately and invalidate conditions before reading
+	//	Compensates for < 20.0.0.5 User Version/User Version 2 program defaults issue
+	if ( !header )
+		return false;
+
+	set<int>( header, "User Version", 0 );
+	set<int>( header, "User Version 2", 0 );
+
+	invalidateConditions( header, false );
+
+	return loadItem( header, stream );
 }
 
 bool NifModel::loadHeaderOnly( const QString & fname )
@@ -2176,6 +2246,10 @@ bool NifModel::earlyRejection( const QString & filepath, const QString & blockId
 	return (ver_match && blk_match);
 }
 
+/*
+ *  File Offset
+ */
+
 int NifModel::fileOffset( const QModelIndex & index ) const
 {
 	NifSStream stream( this );
@@ -2218,6 +2292,32 @@ int NifModel::fileOffset( const QModelIndex & index ) const
 
 	return -1;
 }
+
+bool NifModel::fileOffset( NifItem * parent, NifItem * target, NifSStream & stream, int & ofs ) const
+{
+	if ( parent == target )
+		return true;
+
+	for ( auto child : parent->children() ) {
+		if ( child == target )
+			return true;
+
+		if ( evalCondition( child ) ) {
+			if ( isArray( child ) || !child->arr2().isEmpty() || child->childCount() > 0 ) {
+				if ( fileOffset( child, target, stream, ofs ) )
+					return true;
+			} else {
+				ofs += stream.size( child->value() );
+			}
+		}
+	}
+
+	return false;
+}
+
+/*
+ *  Block Size
+ */
 
 int NifModel::blockSize( const QModelIndex & index ) const
 {
@@ -2271,115 +2371,9 @@ int NifModel::blockSize( NifItem * parent, NifSStream & stream ) const
 	return size;
 }
 
-bool NifModel::loadItem( NifItem * parent, NifIStream & stream )
-{
-	if ( !parent )
-		return false;
-
-	for ( auto child : parent->children() ) {
-		if ( !child->isConditionless() )
-			child->invalidateCondition();
-
-		if ( child->isAbstract() ) {
-			//qDebug() << "Not loading abstract item " << child->name();
-			continue;
-		}
-
-		if ( evalCondition( child ) ) {
-			if ( isArray( child ) ) {
-				if ( !updateArrayItem( child ) || !loadItem( child, stream ) )
-					return false;
-			} else if ( child->childCount() > 0 ) {
-				if ( !loadItem( child, stream ) )
-					return false;
-			} else {
-				if ( !stream.read( child->value() ) )
-					return false;
-			}
-		}
-	}
-
-	return true;
-}
-
-bool NifModel::loadHeader( NifItem * header, NifIStream & stream )
-{
-	// Load header separately and invalidate conditions before reading
-	//	Compensates for < 20.0.0.5 User Version/User Version 2 program defaults issue
-	if ( !header )
-		return false;
-
-	set<int>( header, "User Version", 0 );
-	set<int>( header, "User Version 2", 0 );
-
-	invalidateConditions( header, false );
-	
-	return loadItem( header, stream );
-}
-
-bool NifModel::saveItem( NifItem * parent, NifOStream & stream ) const
-{
-	if ( !parent )
-		return false;
-
-	for ( auto child : parent->children() ) {
-		if ( child->isAbstract() ) {
-			qDebug() << "Not saving abstract item " << child->name();
-			continue;
-		}
-
-		if ( evalCondition( child ) ) {
-			if ( isArray( child ) || !child->arr2().isEmpty() || child->childCount() > 0 ) {
-				if ( isArray( child ) && child->childCount() != getArraySize( child ) ) {
-					if ( child->isBinary() ) {
-						// special byte
-					} else {
-						Message::append( tr( "Warnings were generated while reading the blocks." ),
-							tr( "block %1 %2 array size mismatch" ).arg( getBlockNumber( parent ) ).arg( child->name() )
-						);
-					}
-				}
-
-				if ( !saveItem( child, stream ) )
-					return false;
-			} else {
-				if ( !stream.write( child->value() ) )
-					return false;
-			}
-		}
-	}
-
-	return true;
-}
-
-bool NifModel::fileOffset( NifItem * parent, NifItem * target, NifSStream & stream, int & ofs ) const
-{
-	if ( parent == target )
-		return true;
-
-	for ( auto child : parent->children() ) {
-		if ( child == target )
-			return true;
-
-		if ( evalCondition( child ) ) {
-			if ( isArray( child ) || !child->arr2().isEmpty() || child->childCount() > 0 ) {
-				if ( fileOffset( child, target, stream, ofs ) )
-					return true;
-			} else {
-				ofs += stream.size( child->value() );
-			}
-		}
-	}
-
-	return false;
-}
-
-NifItem * NifModel::insertBranch( NifItem * parentItem, const NifData & data, int at )
-{
-	NifItem * item = parentItem->insertChild( data, at );
-	item->value().changeType( NifValue::tNone );
-	return item;
-}
+/*
+ *  Condition Functions
+ */
 
 bool NifModel::evalCondition( NifItem * item, bool chkParents ) const
 {
@@ -2479,8 +2473,19 @@ void NifModel::invalidateDependentConditions( const QModelIndex & index )
 
 
 /*
- *  link functions
+ *  Link Functions
  */
+
+
+void NifModel::mapLinks( const QMap<qint32, qint32> & map )
+{
+	mapLinks( root, map );
+	updateLinks();
+	emit linksChanged();
+
+	updateHeader();
+	updateFooter();
+}
 
 void NifModel::updateLinks( int block )
 {
@@ -2791,6 +2796,27 @@ int NifModel::getParent( const QModelIndex & index ) const
 	return getParent( getBlockNumber( index ) );
 }
 
+/*
+ *  String functions
+ */
+
+void NifModel::updateStrings( NifModel * src, NifModel * tgt, NifItem * item )
+{
+	if ( !item )
+		return;
+
+	NifValue::Type vt = item->value().type();
+
+	if ( vt == NifValue::tStringIndex || vt == NifValue::tSizedString || item->type() == "string" ) {
+		QString str = src->string( src->createIndex( 0, 0, item ) );
+		tgt->assignString( tgt->createIndex( 0, 0, item ), str, false );
+	}
+
+	for ( auto child : item->children() ) {
+		updateStrings( src, tgt, child );
+	}
+}
+
 QString NifModel::string( const QModelIndex & index, bool extraInfo ) const
 {
 	NifValue v = getValue( index );
@@ -2934,7 +2960,7 @@ bool NifModel::assignString( const QModelIndex & index, const QString & name, co
 }
 
 
-// convert a block from one type to another
+// Convert a block from one type to another
 void NifModel::convertNiBlock( const QString & identifier, const QModelIndex & index )
 {
 	QString btype = getBlockName( index );
@@ -3013,7 +3039,6 @@ void NifModel::convertNiBlock( const QString & identifier, const QModelIndex & i
 	}
 }
 
-// TODO: Unused
 bool NifModel::holdUpdates( bool value )
 {
 	bool retval = lockUpdates;
@@ -3031,7 +3056,6 @@ bool NifModel::holdUpdates( bool value )
 	return retval;
 }
 
-// TODO: Unused
 void NifModel::updateModel( UpdateType value )
 {
 	if ( value & utHeader )
@@ -3076,90 +3100,4 @@ QVariant NifModelEval::operator()( const QVariant & v ) const
 	}
 
 	return v;
-}
-
-
-/*
- *  ChangeValueCommand
- */
-
-ChangeValueCommand::ChangeValueCommand( const QModelIndex & index,
-	const QVariant & value, const QString & valueString, const QString & valueType, NifModel * model )
-	: QUndoCommand(), nif( model ), idx( index )
-{
-	oldValue = index.data( Qt::EditRole );
-	newValue = value;
-
-	auto oldTxt = index.data( Qt::DisplayRole ).toString();
-	auto newTxt = valueString;
-
-	if ( !newTxt.isEmpty() )
-		setText( QApplication::translate( "ChangeValueCommand", "Set %1 to %2" ).arg( valueType ).arg( newTxt ) );
-	else
-		setText( QApplication::translate( "ChangeValueCommand", "Modify %1" ).arg( valueType ) );
-}
-
-ChangeValueCommand::ChangeValueCommand( const QModelIndex & index, const NifValue & oldVal, 
-										const NifValue & newVal, const QString & valueType, NifModel * model )
-	: QUndoCommand(), nif( model ), idx( index )
-{
-	oldValue = oldVal.toVariant();
-	newValue = newVal.toVariant();
-
-	auto oldTxt = oldVal.toString();
-	auto newTxt = newVal.toString();
-
-	if ( !newTxt.isEmpty() )
-		setText( QApplication::translate( "ChangeValueCommand", "Set %1 to %2" ).arg( valueType ).arg( newTxt ) );
-	else
-		setText( QApplication::translate( "ChangeValueCommand", "Modify %1" ).arg( valueType ) );
-}
-
-void ChangeValueCommand::redo()
-{
-	//qDebug() << "Redoing";
-	nif->setData( idx, newValue, Qt::EditRole );
-
-	//qDebug() << nif->data( idx ).toString();
-}
-
-void ChangeValueCommand::undo()
-{
-	//qDebug() << "Undoing";
-	nif->setData( idx, oldValue, Qt::EditRole );
-
-	//qDebug() << nif->data( idx ).toString();
-}
-
-
-/*
- *  ToggleCheckBoxListCommand
- */
-
-ToggleCheckBoxListCommand::ToggleCheckBoxListCommand( const QModelIndex & index,
-	const QVariant & value, const QString & valueType, NifModel * model )
-	: QUndoCommand(), nif( model ), idx( index )
-{
-	oldValue = index.data( Qt::EditRole );
-	newValue = value;
-
-	auto oldTxt = index.data( Qt::DisplayRole ).toString();
-
-	setText( QApplication::translate( "ToggleCheckBoxListCommand", "Modify %1" ).arg( valueType ) );
-}
-
-void ToggleCheckBoxListCommand::redo()
-{
-	//qDebug() << "Redoing";
-	nif->setData( idx, newValue, Qt::EditRole );
-
-	//qDebug() << nif->data( idx ).toString();
-}
-
-void ToggleCheckBoxListCommand::undo()
-{
-	//qDebug() << "Undoing";
-	nif->setData( idx, oldValue, Qt::EditRole );
-
-	//qDebug() << nif->data( idx ).toString();
 }
