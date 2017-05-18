@@ -171,7 +171,7 @@ SOURCES += \
         src/nifmodel.cpp \
         src/nifproxy.cpp \
         src/nifskope.cpp \
-        src/nifskope_ui.cpp \
+		src/ui/nifskope_ui.cpp \
         src/niftypes.cpp \
         src/nifvalue.cpp \
         src/nifxml.cpp \
@@ -447,7 +447,8 @@ build_pass|!debug_and_release {
 
         #copyDirs( $$SHADERS, shaders )
         #copyDirs( $$LANG, lang )
-        #copyFiles( $$XML $$QSS )
+		#copyFiles( $$QSS )
+		copyFiles( $$XML )
         win32:copyFiles( $$DEP )
 
         # Copy Readmes and rename to TXT
