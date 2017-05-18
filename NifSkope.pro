@@ -32,7 +32,12 @@ CONFIG(debug, debug|release) {
         DEFINES += QT_NO_DEBUG_OUTPUT
 }
 
-INCLUDEPATH += src lib
+INCLUDEPATH += src \
+			src/datamodels \
+			src/ui/ \
+			src/ui/widgets \
+			lib \
+
 
 # Require explicit
 DEFINES += \
@@ -133,28 +138,28 @@ include(NifSkope_targets.pri)
 
 HEADERS += \
         src/actionmenu.h \
-        src/basemodel.h \
-        src/kfmmodel.h \
+		src/datamodels/basemodel.h \
+		src/datamodels/kfmmodel.h \
         src/message.h \
         src/nifexpr.h \
         src/nifitem.h \
-        src/nifmodel.h \
-        src/nifproxy.h \
+		src/datamodels/nifmodel.h \
+		src/datamodels/nifproxymodel.h \
         src/nifskope.h \
         src/niftypes.h \
         src/nifvalue.h \
         src/settings.h \
-        src/widgets/colorwheel.h \
-        src/widgets/fileselect.h \
-        src/widgets/floatedit.h \
-        src/widgets/floatslider.h \
-        src/widgets/groupbox.h \
-        src/widgets/nifcheckboxlist.h \
-        src/widgets/nifeditors.h \
-        src/widgets/nifview.h \
-        src/widgets/refrbrowser.h \
-        src/widgets/valueedit.h \
-        src/widgets/xmlcheck.h \
+		src/ui/widgets/colorwheel.h \
+		src/ui/widgets/fileselect.h \
+		src/ui/widgets/floatedit.h \
+		src/ui/widgets/floatslider.h \
+		src/ui/widgets/groupbox.h \
+		src/ui/widgets/nifcheckboxlist.h \
+		src/ui/widgets/nifeditors.h \
+		src/ui/widgets/nifview.h \
+		src/ui/widgets/refrbrowser.h \
+		src/ui/widgets/valueedit.h \
+		src/ui/widgets/xmlcheck.h \
         src/ui/about_dialog.h \
         src/ui/checkablemessagebox.h \
         src/ui/settingsdialog.h \
@@ -162,31 +167,31 @@ HEADERS += \
 
 SOURCES += \
         src/actionmenu.cpp \
-        src/basemodel.cpp \
-        src/kfmmodel.cpp \
+		src/datamodels/basemodel.cpp \
+		src/datamodels/kfmmodel.cpp \
         src/kfmxml.cpp \
         src/message.cpp \
         src/nifdelegate.cpp \
         src/nifexpr.cpp \
-        src/nifmodel.cpp \
-        src/nifproxy.cpp \
+		src/datamodels/nifmodel.cpp \
+		src/datamodels/nifproxymodel.cpp \
         src/nifskope.cpp \
 		src/ui/nifskope_ui.cpp \
         src/niftypes.cpp \
         src/nifvalue.cpp \
         src/nifxml.cpp \
         src/settings.cpp \
-        src/widgets/colorwheel.cpp \
-        src/widgets/fileselect.cpp \
-        src/widgets/floatedit.cpp \
-        src/widgets/floatslider.cpp \
-        src/widgets/groupbox.cpp \
-        src/widgets/nifcheckboxlist.cpp \
-        src/widgets/nifeditors.cpp \
-        src/widgets/nifview.cpp \
-        src/widgets/refrbrowser.cpp \
-        src/widgets/valueedit.cpp \
-        src/widgets/xmlcheck.cpp \
+		src/ui/widgets/colorwheel.cpp \
+		src/ui/widgets/fileselect.cpp \
+		src/ui/widgets/floatedit.cpp \
+		src/ui/widgets/floatslider.cpp \
+		src/ui/widgets/groupbox.cpp \
+		src/ui/widgets/nifcheckboxlist.cpp \
+		src/ui/widgets/nifeditors.cpp \
+		src/ui/widgets/nifview.cpp \
+		src/ui/widgets/refrbrowser.cpp \
+		src/ui/widgets/valueedit.cpp \
+		src/ui/widgets/xmlcheck.cpp \
         src/ui/about_dialog.cpp \
         src/ui/checkablemessagebox.cpp \
         src/ui/settingsdialog.cpp \
