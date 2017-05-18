@@ -34,7 +34,7 @@ SettingsDialog::SettingsDialog( QWidget * parent ) :
 	btnApply = ui->submit->button( QDialogButtonBox::Apply );
 	btnApply->setEnabled( false );
 
-	QSettings settings;
+	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
 
 	settingsVersion = settings.value( "Settings/Version" );
 	if ( settingsVersion.isNull() ) {

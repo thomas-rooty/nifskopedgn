@@ -353,7 +353,7 @@ void NifSkope::swapModels()
 
 void NifSkope::updateSettings()
 {
-	QSettings settings;
+	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
 
 	settings.beginGroup( "Settings" );
 
@@ -563,7 +563,7 @@ void updateRecentFiles( QStringList & files, const QString & file )
 
 void NifSkope::updateRecentFileActions()
 {
-	QSettings settings;
+	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
 	QStringList files = settings.value( "File/Recent File List" ).toStringList();
 
 	int numRecentFiles = ::updateRecentActions( recentFileActs, files );
@@ -606,7 +606,7 @@ void NifSkope::setCurrentFile( const QString & filename )
 	//	return;
 	//}
 
-	QSettings settings;
+	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
 	QStringList files = settings.value( "File/Recent File List" ).toStringList();
 	::updateRecentFiles( files, currentFile );
 
@@ -617,7 +617,7 @@ void NifSkope::setCurrentFile( const QString & filename )
 
 void NifSkope::clearCurrentFile()
 {
-	QSettings settings;
+	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
 	QStringList files = settings.value( "File/Recent File List" ).toStringList();
 	files.removeAll( currentFile );
 	settings.setValue( "File/Recent File List", files );
@@ -1209,7 +1209,7 @@ int main( int argc, char * argv[] )
 		}
 
 		// Set locale
-		QSettings cfg;
+		QSettings cfg( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
 		cfg.beginGroup( "Settings" );
 		SetAppLocale( cfg.value( "Locale", "en" ).toLocale() );
 		cfg.endGroup();
