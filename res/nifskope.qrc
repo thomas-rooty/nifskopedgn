@@ -13,6 +13,7 @@
         <file alias="collapse">icon/collapse.png</file>
         <file alias="expand">icon/expand.png</file>
         <file alias="sizeGrip">icon/sizegrip.png</file>
+        <file>icon/color-wheel.png</file>
     </qresource>
     <qresource prefix="/btn">
         <file alias="viewWalk">icon/button_view_walk.png</file>
