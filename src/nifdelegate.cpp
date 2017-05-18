@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "kfmmodel.h"
 #include "nifmodel.h"
-#include "nifproxy.h"
+#include "nifproxymodel.h"
 #include "actionmenu.h"
 #include "widgets/valueedit.h"
 #include "widgets/nifcheckboxlist.h"
