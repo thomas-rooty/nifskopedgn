@@ -33,8 +33,9 @@ CONFIG(debug, debug|release) {
 }
 
 INCLUDEPATH += src \
-			src/datamodels \
-			src/ui/ \
+			src/core \
+			src/listmodels \
+			src/ui \
 			src/ui/widgets \
 			lib \
 
@@ -137,17 +138,17 @@ include(NifSkope_targets.pri)
 ###############################
 
 HEADERS += \
-        src/actionmenu.h \
-		src/datamodels/basemodel.h \
-		src/datamodels/kfmmodel.h \
-        src/message.h \
+		src/ui/actionmenu.h \
+		src/listmodels/basemodel.h \
+		src/listmodels/kfmmodel.h \
+		src/ui/message.h \
         src/nifexpr.h \
         src/nifitem.h \
-		src/datamodels/nifmodel.h \
-		src/datamodels/nifproxymodel.h \
+		src/listmodels/nifmodel.h \
+		src/listmodels/nifproxymodel.h \
         src/nifskope.h \
         src/niftypes.h \
-        src/nifvalue.h \
+		src/core/nifvalue.h \
         src/settings.h \
 		src/ui/widgets/colorwheel.h \
 		src/ui/widgets/fileselect.h \
@@ -166,20 +167,20 @@ HEADERS += \
         src/version.h
 
 SOURCES += \
-        src/actionmenu.cpp \
-		src/datamodels/basemodel.cpp \
-		src/datamodels/kfmmodel.cpp \
-        src/kfmxml.cpp \
-        src/message.cpp \
-        src/nifdelegate.cpp \
+		src/ui/actionmenu.cpp \
+		src/listmodels/basemodel.cpp \
+		src/listmodels/kfmmodel.cpp \
+		src/core/kfmxml.cpp \
+		src/ui/message.cpp \
+		src/listmodels/nifdelegate.cpp \
         src/nifexpr.cpp \
-		src/datamodels/nifmodel.cpp \
-		src/datamodels/nifproxymodel.cpp \
+		src/listmodels/nifmodel.cpp \
+		src/listmodels/nifproxymodel.cpp \
         src/nifskope.cpp \
 		src/ui/nifskope_ui.cpp \
         src/niftypes.cpp \
-        src/nifvalue.cpp \
-        src/nifxml.cpp \
+		src/core/nifvalue.cpp \
+		src/core/nifxml.cpp \
         src/settings.cpp \
 		src/ui/widgets/colorwheel.cpp \
 		src/ui/widgets/fileselect.cpp \
