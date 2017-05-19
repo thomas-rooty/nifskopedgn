@@ -34,7 +34,7 @@ CONFIG(debug, debug|release) {
 
 INCLUDEPATH += src \
             src/core \
-            src/listmodels \
+            src/model \
             src/ui \
             src/ui/widgets \
             lib \
@@ -138,18 +138,22 @@ include(NifSkope_targets.pri)
 ###############################
 
 HEADERS += \
-        src/ui/actionmenu.h \
-        src/listmodels/basemodel.h \
-        src/listmodels/kfmmodel.h \
-        src/ui/message.h \
+        src/core/nifvalue.h \
+        src/model/basemodel.h \
+        src/model/nifitem.h \
+        src/model/kfmmodel.h \
+        src/model/nifmodel.h \
+        src/model/nifproxymodel.h \
+        src/model/undocommands.h \
         src/nifexpr.h \
-        src/nifitem.h \
-        src/listmodels/nifmodel.h \
-        src/listmodels/nifproxymodel.h \
         src/nifskope.h \
         src/niftypes.h \
-        src/core/nifvalue.h \
         src/settings.h \
+        src/ui/about_dialog.h \
+        src/ui/actionmenu.h \
+        src/ui/checkablemessagebox.h \
+        src/ui/message.h \
+        src/ui/settingsdialog.h \
         src/ui/widgets/colorwheel.h \
         src/ui/widgets/fileselect.h \
         src/ui/widgets/floatedit.h \
@@ -161,28 +165,28 @@ HEADERS += \
         src/ui/widgets/refrbrowser.h \
         src/ui/widgets/valueedit.h \
         src/ui/widgets/xmlcheck.h \
-        src/ui/about_dialog.h \
-        src/ui/checkablemessagebox.h \
-        src/ui/settingsdialog.h \
-        src/version.h \
-        src/undocommands.h
+        src/version.h
 
 SOURCES += \
-        src/ui/actionmenu.cpp \
-        src/listmodels/basemodel.cpp \
-        src/listmodels/kfmmodel.cpp \
         src/core/kfmxml.cpp \
-        src/ui/message.cpp \
-        src/listmodels/nifdelegate.cpp \
-        src/nifexpr.cpp \
-        src/listmodels/nifmodel.cpp \
-        src/listmodels/nifproxymodel.cpp \
-        src/nifskope.cpp \
-        src/ui/nifskope_ui.cpp \
-        src/niftypes.cpp \
         src/core/nifvalue.cpp \
         src/core/nifxml.cpp \
+        src/model/basemodel.cpp \
+        src/model/kfmmodel.cpp \
+        src/model/nifdelegate.cpp \
+        src/model/nifmodel.cpp \
+        src/model/nifproxymodel.cpp \
+        src/model/undocommands.cpp \
+        src/nifexpr.cpp \
+        src/nifskope.cpp \
+        src/niftypes.cpp \
         src/settings.cpp \
+        src/ui/about_dialog.cpp \
+        src/ui/actionmenu.cpp \
+        src/ui/checkablemessagebox.cpp \
+        src/ui/message.cpp \
+        src/ui/nifskope_ui.cpp \
+        src/ui/settingsdialog.cpp \
         src/ui/widgets/colorwheel.cpp \
         src/ui/widgets/fileselect.cpp \
         src/ui/widgets/floatedit.cpp \
@@ -194,11 +198,7 @@ SOURCES += \
         src/ui/widgets/refrbrowser.cpp \
         src/ui/widgets/valueedit.cpp \
         src/ui/widgets/xmlcheck.cpp \
-        src/ui/about_dialog.cpp \
-        src/ui/checkablemessagebox.cpp \
-        src/ui/settingsdialog.cpp \
         src/version.cpp \
-        src/undocommands.cpp \
         src/main.cpp
 
 RESOURCES += \
