@@ -134,6 +134,11 @@ public:
 	//! A map of all the currently support filetypes to their file extensions.
 	static const QList<QPair<QString, QString>> filetypes;
 
+	//! Sets application locale and loads translation files
+	static void SetAppLocale(QLocale curLocale);
+
+	static void MyMessageOutput( QtMsgType type, const QMessageLogContext & context, const QString & str );
+
 	enum { NumRecentFiles = 10 };
 
 signals:

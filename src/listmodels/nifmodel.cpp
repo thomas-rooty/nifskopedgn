@@ -56,7 +56,7 @@ NifModel::NifModel( QObject * parent ) : BaseModel( parent )
 
 void NifModel::updateSettings()
 {
-	QSettings settings;
+	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
 
 	settings.beginGroup( "Settings/NIF/Startup Defaults" );
 
@@ -1717,7 +1717,7 @@ bool NifModel::setHeaderString( const QString & s )
 
 bool NifModel::load( QIODevice & device )
 {
-	QSettings cfg;
+	QSettings cfg( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
 	bool ignoreSize = false;
 	ignoreSize = cfg.value( "Ignore Block Size", false ).toBool();
 
