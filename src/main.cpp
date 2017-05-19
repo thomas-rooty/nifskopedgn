@@ -102,8 +102,13 @@ int main( int argc, char * argv[] )
 			}
 		}
 
+		// Set QSettings path
+
+		QSettings::setPath( QSettings::IniFormat, QSettings::SystemScope, qApp->applicationDirPath() );
+
 		// Set locale
-		QSettings cfg( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+
+		QSettings cfg( "nifskope.ini", QSettings::IniFormat );
 		cfg.beginGroup( "Settings" );
 		NifSkope::SetAppLocale( cfg.value( "Locale", "en" ).toLocale() );
 		cfg.endGroup();

@@ -38,7 +38,7 @@ TestShredder * TestShredder::create()
 TestShredder::TestShredder()
 	: QWidget()
 {
-	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings settings( "nifskope.ini", QSettings::IniFormat );
 	settings.beginGroup( "XML Checker" );
 
 	directory = new FileSelector( FileSelector::Folder, "Dir", QBoxLayout::RightToLeft );
@@ -138,7 +138,7 @@ TestShredder::TestShredder()
 
 TestShredder::~TestShredder()
 {
-	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings settings( "nifskope.ini", QSettings::IniFormat );
 	settings.beginGroup( "XML Checker" );
 
 	settings.setValue( "Directory", directory->text() );

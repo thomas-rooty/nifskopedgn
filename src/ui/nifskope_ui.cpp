@@ -772,7 +772,7 @@ void NifSkope::enableUi()
 
 void NifSkope::saveUi() const
 {
-	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings settings( "nifskope.ini", QSettings::IniFormat );
 	// TODO: saveState takes a version number which can be incremented between releases if necessary
 	settings.setValue( "Window State"_uip, saveState( 0x073 ) );
 	settings.setValue( "Window Geometry"_uip, saveGeometry() );
@@ -797,7 +797,7 @@ void NifSkope::saveUi() const
 
 void NifSkope::restoreUi()
 {
-	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings settings( "nifskope.ini", QSettings::IniFormat );
 	restoreGeometry( settings.value( "Window Geometry"_uip ).toByteArray() );
 	restoreState( settings.value( "Window State"_uip ).toByteArray(), 0x073 );
 
@@ -1012,7 +1012,7 @@ void NifSkope::contextMenu( const QPoint & pos )
 
 void NifSkope::overrideViewFont()
 {
-	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings settings( "nifskope.ini", QSettings::IniFormat );
 	QVariant var = settings.value( "UI/View Font" );
 
 	if ( var.canConvert<QFont>() ) {
@@ -1049,7 +1049,7 @@ void NifSkope::on_aSelectFont_triggered()
 		return;
 
 	setViewFont( fnt );
-	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings settings( "nifskope.ini", QSettings::IniFormat );
 	settings.setValue( "UI/View Font", fnt );
 }
 

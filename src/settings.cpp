@@ -38,7 +38,7 @@ SettingsPane::SettingsPane( QWidget * parent ) :
 		connect( this, &SettingsPane::paneModified, dlg, &SettingsDialog::modified );
 	}
 
-	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings settings( "nifskope.ini", QSettings::IniFormat );
 	QVariant settingsVersion = settings.value( "Settings/Version" );
 	if ( settingsVersion.isNull() ) {
 		// First time install
@@ -289,7 +289,7 @@ SettingsGeneral::~SettingsGeneral()
 
 void SettingsGeneral::read()
 {
-	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings settings( "nifskope.ini", QSettings::IniFormat );
 
 	settings.beginGroup( "Settings" );
 
@@ -312,7 +312,7 @@ void SettingsGeneral::write()
 	if ( !isModified() )
 		return;
 
-	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings settings( "nifskope.ini", QSettings::IniFormat );
 
 	settings.beginGroup( "Settings" );
 
@@ -393,7 +393,7 @@ SettingsRender::SettingsRender( QWidget * parent ) :
 
 void SettingsRender::read()
 {
-	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings settings( "nifskope.ini", QSettings::IniFormat );
 
 	settings.beginGroup( "Settings/Render" );
 
@@ -416,7 +416,7 @@ void SettingsRender::write()
 	if ( !isModified() )
 		return;
 
-	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings settings( "nifskope.ini", QSettings::IniFormat );
 
 	settings.beginGroup( "Settings/Render" );
 
@@ -540,7 +540,7 @@ SettingsResources::~SettingsResources()
 
 void SettingsResources::read()
 {
-	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings settings( "nifskope.ini", QSettings::IniFormat );
 
 	QVariant foldersVal = settings.value( "Settings/Resources/Folders", QStringList() );
 	folders->setStringList( foldersVal.toStringList() );
@@ -561,7 +561,7 @@ void SettingsResources::write()
 	if ( !isModified() )
 		return;
 
-	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings settings( "nifskope.ini", QSettings::IniFormat );
 
 	settings.setValue( "Settings/Resources/Folders", folders->stringList() );
 	settings.setValue( "Settings/Resources/Archives", archives->stringList() );

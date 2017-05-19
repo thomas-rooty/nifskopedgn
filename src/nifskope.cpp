@@ -384,7 +384,7 @@ void NifSkope::swapModels()
 
 void NifSkope::updateSettings()
 {
-	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings settings( "nifskope.ini", QSettings::IniFormat );
 
 	settings.beginGroup( "Settings" );
 
@@ -594,7 +594,7 @@ void updateRecentFiles( QStringList & files, const QString & file )
 
 void NifSkope::updateRecentFileActions()
 {
-	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings settings( "nifskope.ini", QSettings::IniFormat );
 	QStringList files = settings.value( "File/Recent File List" ).toStringList();
 
 	int numRecentFiles = ::updateRecentActions( recentFileActs, files );
@@ -637,7 +637,7 @@ void NifSkope::setCurrentFile( const QString & filename )
 	//	return;
 	//}
 
-	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings settings( "nifskope.ini", QSettings::IniFormat );
 	QStringList files = settings.value( "File/Recent File List" ).toStringList();
 	::updateRecentFiles( files, currentFile );
 
@@ -648,7 +648,7 @@ void NifSkope::setCurrentFile( const QString & filename )
 
 void NifSkope::clearCurrentFile()
 {
-	QSettings settings( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings settings( "nifskope.ini", QSettings::IniFormat );
 	QStringList files = settings.value( "File/Recent File List" ).toStringList();
 	files.removeAll( currentFile );
 	settings.setValue( "File/Recent File List", files );

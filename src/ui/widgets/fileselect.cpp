@@ -54,7 +54,7 @@ QAction * FileSelector::completionAction;
 
 CompletionAction::CompletionAction( QObject * parent ) : QAction( "Completion of Filenames", parent )
 {
-	QSettings cfg( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings cfg( "nifskope.ini", QSettings::IniFormat );
 	setCheckable( true );
 	setChecked( cfg.value( "completion of file names", false ).toBool() );
 
@@ -67,7 +67,7 @@ CompletionAction::~CompletionAction()
 
 void CompletionAction::sltToggled( bool )
 {
-	QSettings cfg( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings cfg( "nifskope.ini", QSettings::IniFormat );
 	cfg.setValue( tr( "completion of file names" ), isChecked() );
 }
 

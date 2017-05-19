@@ -103,7 +103,7 @@ ActionMenu::~ActionMenu()
 
 void ActionMenu::cast( NifModel * nif, const QModelIndex & index, ActionPtr a )
 {
-	QSettings cfg( QString( "%1/nifskope.ini" ).arg( QCoreApplication::applicationDirPath() ), QSettings::IniFormat );
+	QSettings cfg( "nifskope.ini", QSettings::IniFormat );
 
 	bool suppressConfirm = cfg.value( "Settings/Suppress Undoable Confirmation", false ).toBool();
 	bool accepted = false;
