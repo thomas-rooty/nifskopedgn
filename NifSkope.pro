@@ -33,11 +33,11 @@ CONFIG(debug, debug|release) {
 }
 
 INCLUDEPATH += src \
-			src/core \
-			src/listmodels \
-			src/ui \
-			src/ui/widgets \
-			lib \
+            src/core \
+            src/listmodels \
+            src/ui \
+            src/ui/widgets \
+            lib \
 
 
 # Require explicit
@@ -138,65 +138,66 @@ include(NifSkope_targets.pri)
 ###############################
 
 HEADERS += \
-		src/ui/actionmenu.h \
-		src/listmodels/basemodel.h \
-		src/listmodels/kfmmodel.h \
-		src/ui/message.h \
+        src/ui/actionmenu.h \
+        src/listmodels/basemodel.h \
+        src/listmodels/kfmmodel.h \
+        src/ui/message.h \
         src/nifexpr.h \
         src/nifitem.h \
-		src/listmodels/nifmodel.h \
-		src/listmodels/nifproxymodel.h \
+        src/listmodels/nifmodel.h \
+        src/listmodels/nifproxymodel.h \
         src/nifskope.h \
         src/niftypes.h \
-		src/core/nifvalue.h \
+        src/core/nifvalue.h \
         src/settings.h \
-		src/ui/widgets/colorwheel.h \
-		src/ui/widgets/fileselect.h \
-		src/ui/widgets/floatedit.h \
-		src/ui/widgets/floatslider.h \
-		src/ui/widgets/groupbox.h \
-		src/ui/widgets/nifcheckboxlist.h \
-		src/ui/widgets/nifeditors.h \
-		src/ui/widgets/nifview.h \
-		src/ui/widgets/refrbrowser.h \
-		src/ui/widgets/valueedit.h \
-		src/ui/widgets/xmlcheck.h \
+        src/ui/widgets/colorwheel.h \
+        src/ui/widgets/fileselect.h \
+        src/ui/widgets/floatedit.h \
+        src/ui/widgets/floatslider.h \
+        src/ui/widgets/groupbox.h \
+        src/ui/widgets/nifcheckboxlist.h \
+        src/ui/widgets/nifeditors.h \
+        src/ui/widgets/nifview.h \
+        src/ui/widgets/refrbrowser.h \
+        src/ui/widgets/valueedit.h \
+        src/ui/widgets/xmlcheck.h \
         src/ui/about_dialog.h \
         src/ui/checkablemessagebox.h \
         src/ui/settingsdialog.h \
         src/version.h
 
 SOURCES += \
-		src/ui/actionmenu.cpp \
-		src/listmodels/basemodel.cpp \
-		src/listmodels/kfmmodel.cpp \
-		src/core/kfmxml.cpp \
-		src/ui/message.cpp \
-		src/listmodels/nifdelegate.cpp \
+        src/ui/actionmenu.cpp \
+        src/listmodels/basemodel.cpp \
+        src/listmodels/kfmmodel.cpp \
+        src/core/kfmxml.cpp \
+        src/ui/message.cpp \
+        src/listmodels/nifdelegate.cpp \
         src/nifexpr.cpp \
-		src/listmodels/nifmodel.cpp \
-		src/listmodels/nifproxymodel.cpp \
+        src/listmodels/nifmodel.cpp \
+        src/listmodels/nifproxymodel.cpp \
         src/nifskope.cpp \
-		src/ui/nifskope_ui.cpp \
+        src/ui/nifskope_ui.cpp \
         src/niftypes.cpp \
-		src/core/nifvalue.cpp \
-		src/core/nifxml.cpp \
+        src/core/nifvalue.cpp \
+        src/core/nifxml.cpp \
         src/settings.cpp \
-		src/ui/widgets/colorwheel.cpp \
-		src/ui/widgets/fileselect.cpp \
-		src/ui/widgets/floatedit.cpp \
-		src/ui/widgets/floatslider.cpp \
-		src/ui/widgets/groupbox.cpp \
-		src/ui/widgets/nifcheckboxlist.cpp \
-		src/ui/widgets/nifeditors.cpp \
-		src/ui/widgets/nifview.cpp \
-		src/ui/widgets/refrbrowser.cpp \
-		src/ui/widgets/valueedit.cpp \
-		src/ui/widgets/xmlcheck.cpp \
+        src/ui/widgets/colorwheel.cpp \
+        src/ui/widgets/fileselect.cpp \
+        src/ui/widgets/floatedit.cpp \
+        src/ui/widgets/floatslider.cpp \
+        src/ui/widgets/groupbox.cpp \
+        src/ui/widgets/nifcheckboxlist.cpp \
+        src/ui/widgets/nifeditors.cpp \
+        src/ui/widgets/nifview.cpp \
+        src/ui/widgets/refrbrowser.cpp \
+        src/ui/widgets/valueedit.cpp \
+        src/ui/widgets/xmlcheck.cpp \
         src/ui/about_dialog.cpp \
         src/ui/checkablemessagebox.cpp \
         src/ui/settingsdialog.cpp \
-        src/version.cpp
+        src/version.cpp \
+        src/main.cpp
 
 RESOURCES += \
         res/nifskope.qrc
@@ -453,8 +454,8 @@ build_pass|!debug_and_release {
 
         #copyDirs( $$SHADERS, shaders )
         #copyDirs( $$LANG, lang )
-		#copyFiles( $$QSS )
-		copyFiles( $$XML )
+        #copyFiles( $$QSS )
+        copyFiles( $$XML )
         win32:copyFiles( $$DEP )
 
         # Copy Readmes and rename to TXT

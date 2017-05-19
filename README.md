@@ -42,3 +42,4 @@ Refer to these other documents in your installation folder or at the links provi
 ## [CONTRIBUTORS](https://github.com/niftools/nifskope/blob/develop/CONTRIBUTORS.md)
  
 ## [LICENSE](https://github.com/niftools/nifskope/blob/develop/LICENSE.md)
+
