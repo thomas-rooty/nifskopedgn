@@ -46,6 +46,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QVector>
 
 
+#define NifSkopeDisplayRole (Qt::UserRole + 42)
+
+
 //! @file basemodel.h BaseModel, BaseModelEval
 
 class QAbstractItemDelegate;

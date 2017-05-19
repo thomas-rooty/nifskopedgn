@@ -32,10 +32,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "nifskope.h"
 #include "version.h"
-#include "settings.h"
 
 #include "ui_nifskope.h"
 #include "ui/about_dialog.h"
+#include "ui/settingsdialog.h"
 
 #include "kfmmodel.h"
 #include "nifmodel.h"
@@ -59,6 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QLocalSocket>
 #include <QMessageBox>
 #include <QProgressBar>
+#include <QSettings>
 #include <QTimer>
 #include <QToolBar>
 #include <QToolButton>

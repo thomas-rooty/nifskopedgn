@@ -148,12 +148,13 @@ HEADERS += \
         src/nifexpr.h \
         src/nifskope.h \
         src/niftypes.h \
-        src/settings.h \
+        #src/settings.h \
         src/ui/about_dialog.h \
         src/ui/actionmenu.h \
         src/ui/checkablemessagebox.h \
         src/ui/message.h \
         src/ui/settingsdialog.h \
+        src/ui/settingspane.h \
         src/ui/widgets/colorwheel.h \
         src/ui/widgets/fileselect.h \
         src/ui/widgets/floatedit.h \
@@ -180,13 +181,14 @@ SOURCES += \
         src/nifexpr.cpp \
         src/nifskope.cpp \
         src/niftypes.cpp \
-        src/settings.cpp \
+        #src/settings.cpp \
         src/ui/about_dialog.cpp \
         src/ui/actionmenu.cpp \
         src/ui/checkablemessagebox.cpp \
         src/ui/message.cpp \
         src/ui/nifskope_ui.cpp \
         src/ui/settingsdialog.cpp \
+        src/ui/settingspane.cpp \
         src/ui/widgets/colorwheel.cpp \
         src/ui/widgets/fileselect.cpp \
         src/ui/widgets/floatedit.cpp \
