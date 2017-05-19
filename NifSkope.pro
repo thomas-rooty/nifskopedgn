@@ -148,7 +148,7 @@ HEADERS += \
         src/nifexpr.h \
         src/nifskope.h \
         src/niftypes.h \
-        #src/settings.h \
+        src/settings.h \
         src/ui/about_dialog.h \
         src/ui/actionmenu.h \
         src/ui/checkablemessagebox.h \

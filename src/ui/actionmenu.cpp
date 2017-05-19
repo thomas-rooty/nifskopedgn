@@ -31,12 +31,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***** END LICENCE BLOCK *****/
 
 #include "actionmenu.h"
+#include "settings.h"
 
 #include "ui/checkablemessagebox.h"
 
 #include <QCache>
 #include <QDir>
-#include <QSettings>
 
 
 
@@ -103,7 +103,7 @@ ActionMenu::~ActionMenu()
 
 void ActionMenu::cast( NifModel * nif, const QModelIndex & index, ActionPtr a )
 {
-	QSettings cfg( "nifskope.ini", QSettings::IniFormat );
+	NSSettings cfg;
 
 	bool suppressConfirm = cfg.value( "Settings/Suppress Undoable Confirmation", false ).toBool();
 	bool accepted = false;

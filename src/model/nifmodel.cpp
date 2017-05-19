@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***** END LICENCE BLOCK *****/
 
 #include "nifmodel.h"
+#include "settings.h"
 
 #include "niftypes.h"
 #include "actionmenu.h"
@@ -39,7 +40,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QColor>
 #include <QDebug>
 #include <QFile>
-#include <QSettings>
 #include <QTime>
 #include <QtEndian>
 
@@ -55,7 +55,7 @@ NifModel::NifModel( QObject * parent ) : BaseModel( parent )
 
 void NifModel::updateSettings()
 {
-	QSettings settings( "nifskope.ini", QSettings::IniFormat );
+	NSSettings settings;
 
 	settings.beginGroup( "Settings/NIF/Startup Defaults" );
 
@@ -1716,7 +1716,7 @@ bool NifModel::setHeaderString( const QString & s )
 
 bool NifModel::load( QIODevice & device )
 {
-	QSettings cfg( "nifskope.ini", QSettings::IniFormat );
+	NSSettings cfg;
 	bool ignoreSize = false;
 	ignoreSize = cfg.value( "Ignore Block Size", false ).toBool();
 

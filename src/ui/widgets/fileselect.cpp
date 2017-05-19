@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***** END LICENCE BLOCK *****/
 
 #include "fileselect.h"
+#include "settings.h"
 
 #include <QAction>
 #include <QApplication>
@@ -41,7 +42,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QLayout>
 #include <QLineEdit>
 #include <QMenu>
-#include <QSettings>
 #include <QThread>
 #include <QTimer>
 #include <QToolButton>
@@ -54,7 +54,7 @@ QAction * FileSelector::completionAction;
 
 CompletionAction::CompletionAction( QObject * parent ) : QAction( "Completion of Filenames", parent )
 {
-	QSettings cfg( "nifskope.ini", QSettings::IniFormat );
+	NSSettings cfg;
 	setCheckable( true );
 	setChecked( cfg.value( "completion of file names", false ).toBool() );
 
@@ -67,7 +67,7 @@ CompletionAction::~CompletionAction()
 
 void CompletionAction::sltToggled( bool )
 {
-	QSettings cfg( "nifskope.ini", QSettings::IniFormat );
+	NSSettings cfg;
 	cfg.setValue( tr( "completion of file names" ), isChecked() );
 }
 

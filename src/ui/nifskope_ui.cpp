@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "nifskope.h"
 #include "version.h"
+#include "settings.h"
 
 #include "ui_nifskope.h"
 #include "ui/about_dialog.h"
@@ -69,7 +70,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QMouseEvent>
 #include <QProgressBar>
 #include <QMessageBox>
-#include <QSettings>
 #include <QTimer>
 #include <QToolBar>
 #include <QToolButton>
@@ -771,7 +771,7 @@ void NifSkope::enableUi()
 
 void NifSkope::saveUi() const
 {
-	QSettings settings( "nifskope.ini", QSettings::IniFormat );
+	NSSettings settings;
 	// TODO: saveState takes a version number which can be incremented between releases if necessary
 	settings.setValue( "Window State"_uip, saveState( 0x073 ) );
 	settings.setValue( "Window Geometry"_uip, saveGeometry() );
@@ -796,7 +796,7 @@ void NifSkope::saveUi() const
 
 void NifSkope::restoreUi()
 {
-	QSettings settings( "nifskope.ini", QSettings::IniFormat );
+	NSSettings settings;
 	restoreGeometry( settings.value( "Window Geometry"_uip ).toByteArray() );
 	restoreState( settings.value( "Window State"_uip ).toByteArray(), 0x073 );
 
@@ -1011,7 +1011,7 @@ void NifSkope::contextMenu( const QPoint & pos )
 
 void NifSkope::overrideViewFont()
 {
-	QSettings settings( "nifskope.ini", QSettings::IniFormat );
+	NSSettings settings;
 	QVariant var = settings.value( "UI/View Font" );
 
 	if ( var.canConvert<QFont>() ) {
@@ -1048,7 +1048,7 @@ void NifSkope::on_aSelectFont_triggered()
 		return;
 
 	setViewFont( fnt );
-	QSettings settings( "nifskope.ini", QSettings::IniFormat );
+	NSSettings settings;
 	settings.setValue( "UI/View Font", fnt );
 }
 

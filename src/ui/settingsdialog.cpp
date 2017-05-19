@@ -1,11 +1,12 @@
 #include "settingsdialog.h"
 #include "settingspane.h"
+#include "settings.h"
+
 #include "ui_settingsdialog.h"
 
 
 #include <QDebug>
 #include <QListWidget>
-#include <QSettings>
 #include <QStatusBar>
 
 
@@ -34,7 +35,7 @@ SettingsDialog::SettingsDialog( QWidget * parent ) :
 	btnApply = ui->submit->button( QDialogButtonBox::Apply );
 	btnApply->setEnabled( false );
 
-	QSettings settings( "nifskope.ini", QSettings::IniFormat );
+	NSSettings settings;
 
 	settingsVersion = settings.value( "Settings/Version" );
 	if ( settingsVersion.isNull() ) {

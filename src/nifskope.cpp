@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "nifskope.h"
 #include "version.h"
+#include "settings.h"
 
 #include "ui_nifskope.h"
 #include "ui/about_dialog.h"
@@ -59,7 +60,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QLocalSocket>
 #include <QMessageBox>
 #include <QProgressBar>
-#include <QSettings>
 #include <QTimer>
 #include <QToolBar>
 #include <QToolButton>
@@ -385,7 +385,7 @@ void NifSkope::swapModels()
 
 void NifSkope::updateSettings()
 {
-	QSettings settings( "nifskope.ini", QSettings::IniFormat );
+	NSSettings settings;
 
 	settings.beginGroup( "Settings" );
 
@@ -595,7 +595,7 @@ void updateRecentFiles( QStringList & files, const QString & file )
 
 void NifSkope::updateRecentFileActions()
 {
-	QSettings settings( "nifskope.ini", QSettings::IniFormat );
+	NSSettings settings;
 	QStringList files = settings.value( "File/Recent File List" ).toStringList();
 
 	int numRecentFiles = ::updateRecentActions( recentFileActs, files );
@@ -638,7 +638,7 @@ void NifSkope::setCurrentFile( const QString & filename )
 	//	return;
 	//}
 
-	QSettings settings( "nifskope.ini", QSettings::IniFormat );
+	NSSettings settings;
 	QStringList files = settings.value( "File/Recent File List" ).toStringList();
 	::updateRecentFiles( files, currentFile );
 
@@ -649,7 +649,7 @@ void NifSkope::setCurrentFile( const QString & filename )
 
 void NifSkope::clearCurrentFile()
 {
-	QSettings settings( "nifskope.ini", QSettings::IniFormat );
+	NSSettings settings;
 	QStringList files = settings.value( "File/Recent File List" ).toStringList();
 	files.removeAll( currentFile );
 	settings.setValue( "File/Recent File List", files );
@@ -668,7 +668,7 @@ void NifSkope::clearCurrentFile()
 //	QString path = filepath;
 //	path.replace( bsa + "/", "" );
 //
-//	QSettings settings;
+//	NSSettings settings;
 //	QHash<QString, QVariant> hash = settings.value( "File/Recent Archive Files" ).toHash();
 //
 //	// Retrieve and update existing Recent Files for BSA
@@ -689,7 +689,7 @@ void NifSkope::clearCurrentFile()
 //
 //	QString file = currentArchive->path();
 //
-//	QSettings settings;
+//	NSSettings settings;
 //	QStringList files = settings.value( "File/Recent Archive List" ).toStringList();
 //	::updateRecentFiles( files, file );
 //
@@ -700,7 +700,7 @@ void NifSkope::clearCurrentFile()
 //
 //void NifSkope::clearCurrentArchive()
 //{
-//	QSettings settings;
+//	NSSettings settings;
 //	QStringList files = settings.value( "File/Recent Archive List" ).toStringList();
 //
 //	files.removeAll( currentArchive->path() );
@@ -711,7 +711,7 @@ void NifSkope::clearCurrentFile()
 //
 //void NifSkope::updateRecentArchiveActions()
 //{
-//	QSettings settings;
+//	NSSettings settings;
 //	QStringList files = settings.value( "File/Recent Archive List" ).toStringList();
 //
 //	int numRecentFiles = ::updateRecentActions( recentArchiveActs, files );
@@ -721,7 +721,7 @@ void NifSkope::clearCurrentFile()
 //
 //void NifSkope::updateRecentArchiveFileActions()
 //{
-//	QSettings settings;
+//	NSSettings settings;
 //	QHash<QString, QVariant> hash = settings.value( "File/Recent Archive Files" ).toHash();
 //
 //	if ( !currentArchive )

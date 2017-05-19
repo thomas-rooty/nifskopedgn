@@ -37,7 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <QDataStream>
 #include <QIODevice>
-#include <QSettings>
 
 
 //! @file nifvalue.cpp NifValue, NifIStream, NifOStream, NifSStream

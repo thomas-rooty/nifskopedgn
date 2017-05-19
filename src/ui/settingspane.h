@@ -3,9 +3,9 @@
 
 #include "ui/settingsdialog.h"
 #include "nifskope.h"
+#include "settings.h"
 
 #include <QWidget>
-#include <QSettings>
 
 
 #define NifSkopeDisplayRole (Qt::UserRole + 42)
@@ -41,8 +41,8 @@ signals:
 	void paneModified();
 
 protected:
-	void readPane( QWidget * w, QSettings & settings );
-	void writePane( QWidget * w, QSettings & settings );
+	void readPane( QWidget * w, NSSettings & settings );
+	void writePane( QWidget * w, NSSettings & settings );
 	bool isModified();
 	void setModified( bool );
 

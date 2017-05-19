@@ -1,4 +1,5 @@
 #include "xmlcheck.h"
+#include "settings.h"
 
 #include "kfmmodel.h"
 #include "nifmodel.h"
@@ -17,7 +18,6 @@
 #include <QMouseEvent>
 #include <QProgressBar>
 #include <QPushButton>
-#include <QSettings>
 #include <QSpinBox>
 #include <QTextBrowser>
 #include <QToolButton>
@@ -38,7 +38,7 @@ TestShredder * TestShredder::create()
 TestShredder::TestShredder()
 	: QWidget()
 {
-	QSettings settings( "nifskope.ini", QSettings::IniFormat );
+	NSSettings settings;
 	settings.beginGroup( "XML Checker" );
 
 	directory = new FileSelector( FileSelector::Folder, "Dir", QBoxLayout::RightToLeft );
@@ -138,7 +138,7 @@ TestShredder::TestShredder()
 
 TestShredder::~TestShredder()
 {
-	QSettings settings( "nifskope.ini", QSettings::IniFormat );
+	NSSettings settings;
 	settings.beginGroup( "XML Checker" );
 
 	settings.setValue( "Directory", directory->text() );
