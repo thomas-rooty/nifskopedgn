@@ -125,7 +125,8 @@ public:
 	 * @param fname The name of the file to load in the new NifSkope window.
 	 * @return		The newly created NifSkope instance.
 	 */
-	static NifSkope * createWindow( const QString & fname = QString() );
+	static NifSkope * createWindow(const QString & fname = QString());
+	static NifSkope * createWindowStripifying(const QString & fname = QString());
 
 	static SettingsDialog * getOptions();
 
@@ -165,7 +166,9 @@ signals:
 
 public slots:
 	void openFile( QString & );
-	void openFiles( QStringList & );
+	void openFiles(QStringList &);
+	void openFilesToStrip(QStringList &);
+	void StripifyFunction();
 
 	void openArchive( const QString & );
 	void openArchiveFile( const QModelIndex & );
@@ -219,12 +222,16 @@ public slots:
 
 protected slots:
 	void openDlg();
+	void openDlgToStrip();
+	void addPhysx();
 	void saveAsDlg();
 
 	void archiveDlg();
 
 	void load();
+	void loadToStripify();
 	void save();
+	void saveStripify();
 
 	void reload();
 
@@ -275,7 +282,9 @@ private:
 	void initConnections();
 
 	void loadFile( const QString & );
-	void saveFile( const QString & );
+	void loadFileToStripify(const QString &);
+	void saveFile(const QString &);
+	void saveFileStripify(const QString &);
 	void checkFile( QFileInfo fInfo, QByteArray filehash );
 
 	void openRecentFile();

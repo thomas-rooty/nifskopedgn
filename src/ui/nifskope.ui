@@ -224,6 +224,8 @@
      <addaction name="aDummyRecentFiles"/>
     </widget>
     <addaction name="aOpen"/>
+    <addaction name="aOpenFilesToStrip"/>
+    <addaction name="aPhysxConvert"/>
     <addaction name="aBrowseArchive"/>
     <addaction name="aReload"/>
     <addaction name="separator"/>
@@ -1645,6 +1647,22 @@ background: qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0
    </property>
    <property name="toolTip">
     <string>Open File</string>
+   </property>
+  </action>
+  <action name="aOpenFilesToStrip">
+   <property name="text">
+    <string>Select multiple files to stripify them...</string>
+   </property>
+   <property name="toolTip">
+    <string>Select Files</string>
+   </property>
+  </action>
+  <action name="aPhysxConvert">
+   <property name="text">
+    <string>Select a folder to add Physx to its NIF...</string>
+   </property>
+   <property name="toolTip">
+    <string>Select Folder</string>
    </property>
   </action>
   <action name="aDummyRecentFiles">

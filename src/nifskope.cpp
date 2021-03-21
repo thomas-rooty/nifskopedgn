@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ui/widgets/inspect.h"
 #include "ui/about_dialog.h"
 #include "ui/settingsdialog.h"
+#include "spells/strippify.cpp"
 
 #include <QAction>
 #include <QApplication>
@@ -72,6 +73,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <fsengine/bsa.h>
 #include <fsengine/fsmanager.h>
+#include <string>
+#include <iostream>
 
 #ifdef WIN32
 #  define WINDOWS_LEAN_AND_MEAN
@@ -607,6 +610,7 @@ void NifSkope::updateAllRecentFileActions()
 			win->updateRecentArchiveFileActions();
 		}
 	}
+
 }
 
 QString NifSkope::getCurrentFile() const
@@ -928,34 +932,90 @@ void NifSkope::openRecentArchiveFile()
 		openArchiveFileString( currentArchive, action->data().toString() );
 }
 
-
-void NifSkope::openFiles( QStringList & files )
+void NifSkope::openFiles(QStringList & files)
 {
 	// Open first file in current window if blank
 	//	or only one file selected.
-	if ( getCurrentFile().isEmpty() || files.count() == 1 ) {
+	if (getCurrentFile().isEmpty() || files.count() == 1) {
 		QString first = files.takeFirst();
-		if ( !first.isEmpty() )
-			loadFile( first );
+		if (!first.isEmpty())
+			loadFile(first);
 	}
 
-	for ( const QString & file : files ) {
-		NifSkope::createWindow( file );
+	for (const QString & file : files) {
+		NifSkope::createWindow(file);
 	}
+}
+
+void NifSkope::openFilesToStrip(QStringList & files )
+
+{
+
+	for (const QString & file : files) {
+		NifSkope::createWindowStripifying(file);
+	}
+
+	// Open each chosen NIF one by one in the same Nifskope window
+
+    ////for (const QString & file : files) {
+		////loadFileToStripify(file);
+	////}
+}
+
+void NifSkope::StripifyFunction()
+{
+
+	//Ce bouton permet de faire un meilleur Sleep(), après avoir cliqué sur ok
+	//ça va passer au stripify, il faut que je regarde ce que fait réellement le bouton OK
+	cout << "into StripifyFunction()" << "\n";
+
+	QList<QPersistentModelIndex> iTriShapes;
+
+	for (int l = 0; l < nif->getBlockCount(); l++) {
+		QModelIndex idx = nif->getBlock(l, "NiTriShape");
+
+		if (idx.isValid())
+			iTriShapes << idx;
+	}
+
+	spStrippify Stripper;
+
+	for (const QModelIndex& idx : iTriShapes) {
+		Stripper.castIfApplicable(nif, idx);
+	}
+	cout << "Stripifying done";
+	saveStripify();
 }
 
 void NifSkope::saveFile( const QString & filename )
 {
+	cout << "saving file";
 	setCurrentFile( filename );
 	save();
 }
 
-void NifSkope::loadFile( const QString & filename )
+void NifSkope::saveFileStripify(const QString & filename)
+{
+	setCurrentFile(filename);
+	saveStripify();
+}
+
+void NifSkope::loadFile(const QString & filename)
+{
+	QApplication::setOverrideCursor(Qt::WaitCursor);
+
+	setCurrentFile(filename);
+	QTimer::singleShot(0, this, SLOT(load()));
+	cout << "Opened file" << "\n";
+}
+
+void NifSkope::loadFileToStripify( const QString & filename )
 {
 	QApplication::setOverrideCursor( Qt::WaitCursor );
 
 	setCurrentFile( filename );
-	QTimer::singleShot( 0, this, SLOT( load() ) );
+	QTimer::singleShot( 0, this, SLOT( loadToStripify() ) );
+	cout << "Opened file" << "\n";
 }
 
 void NifSkope::reload()
@@ -993,12 +1053,44 @@ void NifSkope::load()
 	//}
 }
 
+void NifSkope::loadToStripify()
+{
+	emit beginLoading();
+
+	QFileInfo f(QDir::fromNativeSeparators(currentFile));
+	f.makeAbsolute();
+
+	QString fname = f.filePath();
+
+	// TODO: This is rather poor in terms of file validation
+
+	if (f.suffix().compare("kfm", Qt::CaseInsensitive) == 0) {
+		emit completeLoading(kfm->loadFromFile(fname), fname);
+
+		f.setFile(kfm->getFolder(), kfm->get<QString>(kfm->getKFMroot(), "NIF File Name"));
+
+		return;
+	}
+
+	bool loaded = nif->loadFromFile(fname);
+
+	emit completeLoading(loaded, fname);
+
+	StripifyFunction();
+
+	//if ( loaded ) {
+	//	filehash = fileChecksum( fname, QCryptographicHash::Md5 );
+	//
+	//	checkFile( f, filehash );
+	//}
+}
+
 void NifSkope::save()
 {
 	// Assure file path is absolute
 	// If not absolute, it is loaded from a BSA
-	QFileInfo curFile( currentFile );
-	if ( !curFile.isAbsolute() ) {
+	QFileInfo curFile(currentFile);
+	if (!curFile.isAbsolute()) {
 		saveAsDlg();
 		return;
 	}
@@ -1009,17 +1101,50 @@ void NifSkope::save()
 
 	// TODO: This is rather poor in terms of file validation
 
-	if ( fname.endsWith( ".KFM", Qt::CaseInsensitive ) ) {
-		emit completeSave( kfm->saveToFile( fname ), fname );
-	} else {
-		if ( aSanitize->isChecked() ) {
-			QModelIndex idx = SpellBook::sanitize( nif );
-			if ( idx.isValid() )
-				select( idx );
+	if (fname.endsWith(".KFM", Qt::CaseInsensitive)) {
+		emit completeSave(kfm->saveToFile(fname), fname);
+	}
+	else {
+		if (aSanitize->isChecked()) {
+			QModelIndex idx = SpellBook::sanitize(nif);
+			if (idx.isValid())
+				select(idx);
 		}
 
-		emit completeSave( nif->saveToFile( fname ), fname );
+		emit completeSave(nif->saveToFile(fname), fname);
 	}
+}
+
+void NifSkope::saveStripify()
+{
+	// Assure file path is absolute
+	// If not absolute, it is loaded from a BSA
+	cout << "Saving file" << "\n";
+	QFileInfo curFile(currentFile);
+	if (!curFile.isAbsolute()) {
+		saveAsDlg();
+		return;
+	}
+
+	emit beginSave();
+
+	QString fname = currentFile;
+
+	// TODO: This is rather poor in terms of file validation
+
+	if (fname.endsWith(".KFM", Qt::CaseInsensitive)) {
+		emit completeSave(kfm->saveToFile(fname), fname);
+	}
+	else {
+		if (aSanitize->isChecked()) {
+			QModelIndex idx = SpellBook::sanitize(nif);
+			if (idx.isValid())
+				select(idx);
+		}
+
+		emit completeSave(nif->saveToFile(fname), fname);
+	}
+	close();
 }
 
 

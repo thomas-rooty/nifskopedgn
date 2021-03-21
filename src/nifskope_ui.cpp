@@ -32,6 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "nifskope.h"
 #include "ui_nifskope.h"
+#include <iostream>
+#include <Windows.h>
 
 #include "glview.h"
 #include "message.h"
@@ -93,6 +95,7 @@ QString nstypes::operator""_uip( const char * str, size_t )
 
 using namespace nstypes;
 using namespace nstheme;
+using namespace std;
 
 
 QColor NifSkope::defaultsDark[6] = {
@@ -128,6 +131,22 @@ NifSkope * NifSkope::createWindow( const QString & fname )
 
 	if ( !fname.isEmpty() ) {
 		skope->loadFile( fname );
+	}
+
+	return skope;
+}
+
+NifSkope * NifSkope::createWindowStripifying(const QString & fname)
+{
+	NifSkope * skope = new NifSkope;
+	skope->setAttribute(Qt::WA_DeleteOnClose);
+	skope->restoreUi();
+	skope->loadTheme();
+	skope->show();
+	skope->raise();
+
+	if (!fname.isEmpty()) {
+		skope->loadFileToStripify(fname);
 	}
 
 	return skope;
@@ -182,7 +201,9 @@ void NifSkope::initActions()
 	ui->aWindow->setShortcut( QKeySequence::New );
 
 	connect( ui->aBrowseArchive, &QAction::triggered, this, &NifSkope::archiveDlg );
-	connect( ui->aOpen, &QAction::triggered, this, &NifSkope::openDlg );
+	connect(ui->aOpen, &QAction::triggered, this, &NifSkope::openDlg);
+	connect(ui->aOpenFilesToStrip, &QAction::triggered, this, &NifSkope::openDlgToStrip);
+	connect(ui->aPhysxConvert, &QAction::triggered, this, &NifSkope::addPhysx);
 	connect( ui->aSave, &QAction::triggered, this, &NifSkope::save );  
 	connect( ui->aSaveAs, &QAction::triggered, this, &NifSkope::saveAsDlg );
 
@@ -747,6 +768,27 @@ void NifSkope::openDlg()
 	QStringList files = QFileDialog::getOpenFileNames( this, tr( "Open File" ), path, fileFilters() );
 	if ( !files.isEmpty() )
 		openFiles( files );
+}
+
+void NifSkope::openDlgToStrip()
+{
+	// Grab most recent filepath if blank window
+	auto path = nif->getFileInfo().absolutePath();
+	path = (path.isEmpty()) ? recentFileActs[0]->data().toString() : path;
+
+	if (!saveConfirm())
+		return;
+
+	QStringList files = QFileDialog::getOpenFileNames(this, tr("Select files to stripify"), path, fileFilters());
+	if (!files.isEmpty())
+		openFilesToStrip(files);
+}
+
+void NifSkope::addPhysx()
+{
+	// Heading to Bulk Physx Converter Python Script
+	system("PhysxConverter\\Physx_bulk.py");
+	//system("")
 }
 
 void NifSkope::onLoadBegin()

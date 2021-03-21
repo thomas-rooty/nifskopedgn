@@ -6,6 +6,10 @@
 
 #include <climits>
 
+#include <iostream>
+
+using namespace std;
+
 
 // TODO: Move these to blocks.h / misc.h / wherever
 template <typename T> void copyArray( NifModel * nif, const QModelIndex & iDst, const QModelIndex & iSrc )
@@ -224,6 +228,8 @@ public:
 
 	QModelIndex cast( NifModel * nif, const QModelIndex & ) override final
 	{
+		std::cout << "Stripifying  from btn NiTriShapes into NiTriStrips..." << "\n";
+		std::cout << "nif is : " << nif;
 		QList<QPersistentModelIndex> iTriShapes;
 
 		for ( int l = 0; l < nif->getBlockCount(); l++ ) {

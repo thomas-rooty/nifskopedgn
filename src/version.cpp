@@ -192,14 +192,14 @@ QString NifSkopeVersion::rawToDisplay( const QString & ver, bool showStage /* = 
 	QString verString = QString( "%1.%2.%3" ).arg( verList[0] ).arg( verList[1] ).arg( verList[2] );
 	QString stage, dev;
 
-	QList<QString> stages { "Dev", "Alpha", "Beta", "RC", "" };
-	QList<QString> devs { "Dev", "Post" };
+	QList<QString> stages { "DGN EU", "Alpha", "Beta", "RC", "" };
+	QList<QString> devs { "DGN EU", "Post" };
 
 	if ( showStage ) {
 		stage = stages.value( verList.value( 3, 4 ), "" );
 		int stageVer = verList.value( 4, -1 );
 
-		if ( stage == "Dev" && verList[2] == 0 )
+		if ( stage == "DGN EU" && verList[2] == 0 )
 			verString = QString( "%1.%2" ).arg( verList[0] ).arg( verList[1] );
 
 		if ( !stage.isEmpty() && stageVer > 0 ) {
