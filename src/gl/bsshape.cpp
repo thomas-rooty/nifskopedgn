@@ -82,7 +82,7 @@ void BSShape::updateData( const NifModel * nif )
 		float bitX;
 
 		if ( isDynamic ) {
-			auto dynv = dynVerts.at(i);
+			auto& dynv = dynVerts.at(i);
 			verts << Vector3( dynv );
 			bitX = dynv[3];
 		} else {
@@ -91,10 +91,8 @@ void BSShape::updateData( const NifModel * nif )
 		}
 
 		// Bitangent Y/Z
-		auto bitYi = nif->get<unsigned int>( idx, "Bitangent Y" );
-		auto bitZi = nif->get<unsigned int>( idx, "Bitangent Z" );
-		auto bitY = (double(bitYi) / 255.0) * 2.0 - 1.0;
-		auto bitZ = (double(bitZi) / 255.0) * 2.0 - 1.0;
+		auto bitY = nif->get<float>( idx, "Bitangent Y" );
+		auto bitZ = nif->get<float>( idx, "Bitangent Z" );
 
 		coordset << nif->get<HalfVector2>( idx, "UV" );
 		norms += nif->get<ByteVector3>( idx, "Normal" );

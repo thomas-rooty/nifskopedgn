@@ -1046,7 +1046,7 @@ void drawCMS( const NifModel * nif, const QModelIndex & iShape, bool solid )
 				numStripVerts += strips[v];
 			}
 
-			for ( int n = 0; n < ((int)numOffsets / 3); n++ ) {
+			for ( int n = 0; n < ((int)numOffsets); n++ ) {
 				vertices[n] = chunkOrigin + chunkTranslation + Vector4( offsets[n], 0.0f ) / 1000.0f;
 			}
 
