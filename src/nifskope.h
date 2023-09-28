@@ -250,8 +250,10 @@ protected slots:
 	 * @see importex/importex.cpp
 	 */
 	void fillImportExportMenus();
+	void updateImportExportMenu(const QMenu* menu);
 	//! Perform Import or Export
-	void sltImportExport( QAction * action );
+	void sltImport( QAction* action );
+	void sltExport( QAction* action );
 
 	//! Open a URL using the system handler
 	void openURL();
@@ -291,6 +293,9 @@ private:
 	void clearCurrentArchive();
 	void updateRecentArchiveActions();
 	void updateRecentArchiveFileActions();
+
+	//! Currently selected NiBlock index in the list or tree view
+	QModelIndex currentNifIndex() const;
 
 	//! Disconnect and reconnect the models to the views
 	void swapModels();

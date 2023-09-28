@@ -42,78 +42,88 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QMenu>
 #include <QModelIndex>
 
+#include <string>
+#include <functional>
 
-void exportObj( const NifModel * nif, const QModelIndex & index );
-void exportCol( const NifModel * nif, QFileInfo );
-void importObj( NifModel * nif, const QModelIndex & index, bool collision = false );
+
+void exportObj( const NifModel * nif, const Scene* scene, const QModelIndex & index );
+void exportCol( const NifModel * nif, const Scene* scene, QFileInfo );
+void importObjMain( NifModel * nif, const QModelIndex & index, bool collision = false );
+void importObj( NifModel* nif, const QModelIndex& index );
+void importObjAsCollision( NifModel * nif, const QModelIndex & index );
 void import3ds( NifModel * nif, const QModelIndex & index );
 
 void exportGltf(const NifModel* nif, const Scene* scene, const QModelIndex& index);
 
+
+struct ImportExportOption
+{
+	std::string name;
+	std::function<void(NifModel*, const QModelIndex&)> importFn;
+	std::function<void(const NifModel*, const Scene*, const QModelIndex&)> exportFn;
+	quint32 minBSVersion = 0;
+	quint32 maxBSVersion = 0xFFFFFFFF;
+	quint32 minVersion = 0;
+	quint32 maxVersion = 0x1404FFFF; // < 0x14050000 (20.5)
+};
+
+
+QVector<ImportExportOption> impexOptions{
+	ImportExportOption{ ".OBJ", importObj, exportObj, 0, 171 },
+	ImportExportOption{ ".OBJ as Collision", importObjAsCollision, nullptr, 0, 171 },
+	ImportExportOption{ ".glTF", nullptr, exportGltf, 172 },
+};
+
+
 void NifSkope::fillImportExportMenus()
 {
-	mExport->addAction( tr( "Export .OBJ" ) );
-	mExport->addAction(tr("Export .gltf"));
-	//mExport->addAction( tr( "Export .DAE" ) );
-	//mImport->addAction( tr( "Import .3DS" ) );
-	mImport->addAction( tr( "Import .OBJ" ) );
-	mImport->addAction( tr( "Import .OBJ as Collision" ) );
-	//mImport->addAction(tr("Import .gltf"));
+	int impexIndex = 0;
+	for ( const auto& option : impexOptions ) {
+		if ( option.exportFn ) {
+			mExport->addAction(tr("Export %1").arg(option.name.c_str()));
+			mExport->actions().last()->setData(impexIndex);
+		}
+		if ( option.importFn ) {
+			mImport->addAction(tr("Import %1").arg(option.name.c_str()));
+			mImport->actions().last()->setData(impexIndex);
+		}
+		impexIndex++;
+	}
 }
 
-void NifSkope::sltImportExport( QAction * a )
+void NifSkope::updateImportExportMenu(const QMenu * menu)
 {
-	QModelIndex index;
-
-
-	//Get the currently selected NiBlock index in the list or tree view
-	if ( dList->isVisible() ) {
-		if ( list->model() == proxy ) {
-			index = proxy->mapTo( list->currentIndex() );
-		} else if ( list->model() == nif ) {
-			index = list->currentIndex();
-		}
-	} else if ( dTree->isVisible() ) {
-		if ( tree->model() == proxy ) {
-			index = proxy->mapTo( tree->currentIndex() );
-		} else if ( tree->model() == nif ) {
-			index = tree->currentIndex();
+	for ( const auto a : menu->actions() ) {
+		a->setEnabled(false);
+		auto impex = impexOptions.value(a->data().toInt(), {});
+		if ( impex.importFn || impex.exportFn ) {
+			auto nifver = nif->getVersionNumber();
+			auto bsver = nif->getBSVersion();
+			if ( (nifver >= impex.minVersion && nifver <= impex.maxVersion)
+				&& (bsver >= impex.minBSVersion && bsver <= impex.maxBSVersion) )
+			{
+				a->setEnabled(true);
+			}
 		}
 	}
+}
 
-	if ( !nif || nif->getVersionNumber() >= 0x14050000 ) {
-		mExport->setDisabled( true );
-		mImport->setDisabled( true );
-		return;
+void NifSkope::sltImport( QAction* a )
+{
+	// Do not require index.isValid(), let fn deal with it
+	QModelIndex index = currentNifIndex();
+	auto impex = impexOptions.value(a->data().toInt(), {});
+	if ( impex.importFn ) { 
+		impex.importFn(nif, index);
 	}
+}
 
-	mImport->setDisabled( false );
-	mExport->setDisabled( false );
-
-	if ( nif->getBSVersion() >= 172 ) {
-		// Disable OBJ if/until it is supported for Starfield
-		mImport->actions().at(0)->setDisabled(true);
-		mImport->actions().at(1)->setDisabled(true);
-		mExport->actions().at(0)->setDisabled(true);
-	} else {
-		// Disable glTF if/until it is supported for pre-Starfield
-		//mImport->actions().at(2)->setDisabled(true);
-		mExport->actions().at(1)->setDisabled(true);
+void NifSkope::sltExport( QAction* a )
+{
+	// Do not require index.isValid(), let fn deal with it
+	QModelIndex index = currentNifIndex();
+	auto impex = impexOptions.value(a->data().toInt(), {});
+	if ( impex.exportFn ) {
+		impex.exportFn(nif, ogl->scene, index);
 	}
-	// Import OBJ as Collision disabled for non-Bethesda
-	if ( nif->getBSVersion() == 0 )
-		mImport->actions().at(1)->setDisabled( true );
-
-	if ( a->text() == tr( "Export .OBJ" ) )
-		exportObj( nif, index );
-	else if ( a->text() == tr( "Import .OBJ" ) )
-		importObj( nif, index );
-	else if ( a->text() == tr( "Import .OBJ as Collision" ) )
-		importObj( nif, index, true );
-	else if ( a->text() == tr("Export .gltf") )
-		exportGltf(nif, ogl->scene, index);
-	//else if ( a->text() == tr( "Import .3DS" ) )
-	//	import3ds( nif, index );
-	//else if ( a->text() == tr( "Export .DAE" ) )
-	//	exportCol( nif, currentFile );
 }

@@ -438,8 +438,8 @@ void NifSkope::initMenu()
 	mImport = ui->menuImport;
 
 	fillImportExportMenus();
-	connect( mExport, &QMenu::triggered, this, &NifSkope::sltImportExport );
-	connect( mImport, &QMenu::triggered, this, &NifSkope::sltImportExport );
+	connect( mExport, &QMenu::triggered, this, &NifSkope::sltExport );
+	connect( mImport, &QMenu::triggered, this, &NifSkope::sltImport );
 
 	// BSA Recent Files
 	mRecentArchiveFiles = new QMenu( this );
@@ -793,27 +793,8 @@ void NifSkope::onLoadComplete( bool success, QString & fname )
 {
 	QApplication::restoreOverrideCursor();
 
-	if ( nif && nif->getVersionNumber() >= 0x14050000 ) {
-		mExport->setDisabled( true );
-		mImport->setDisabled( true );
-	} else if ( nif ) {
-		mExport->setDisabled( false );
-		mImport->setDisabled( false );
-		
-		if ( nif->getBSVersion() >= 172 ) {
-			// Disable OBJ if/until it is supported for Starfield
-			mImport->actions().at(0)->setDisabled(true);
-			mImport->actions().at(1)->setDisabled(true);
-			mExport->actions().at(0)->setDisabled(true);
-		} else {
-			// Disable glTF if/until it is supported for pre-Starfield
-			//mImport->actions().at(2)->setDisabled(true);
-			mExport->actions().at(1)->setDisabled(true);
-		}
-		// Import OBJ as Collision disabled for non-Bethesda
-		if ( nif->getBSVersion() == 0 )
-			mImport->actions().at(1)->setDisabled(true);
-	}
+	updateImportExportMenu(mExport);
+	updateImportExportMenu(mImport);
 
 	// Reconnect the models to the views
 	swapModels();
