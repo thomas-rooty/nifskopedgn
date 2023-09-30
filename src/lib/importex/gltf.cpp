@@ -566,7 +566,7 @@ void exportGltf(const NifModel* nif, const Scene* scene, const QModelIndex& inde
 
 	tinygltf::TinyGLTF writer;
 	tinygltf::Model model;
-	model.asset.generator = "NifSkope glTF 2.0 Exporter v1.0";
+	model.asset.generator = "NifSkope glTF 2.0 Exporter v1.1";
 
 	GltfStore gltf;
 	QByteArray buffer;
